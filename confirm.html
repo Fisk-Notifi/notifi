@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifi - Confirm Information</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: white;
+            border-right: 1px solid #e1e1e1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .notifi-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .notifi-logo img {
+            height: 20px;
+        }
+
+        .logo-text {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #4051D3;
+            /* margin-bottom: 0.5rem; */
+        }
+
+        .fisk-logo img {
+            height: 30px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .avatar img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: black;
+            font-size: 16px;
+            padding: 10px;
+            transition: background 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #f0f0f0;
+        }
+
+        .nav-item.active {
+            background-color: #e6e9ff;
+            color: #4051D3;
+        }
+
+        .nav-icon {
+            width: 20px; /* Adjust the size as needed */
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            background-color: #f0f0f0;
+            padding: 20px;
+            position: relative;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Confirmation page specific styles */
+        .confirm-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px 30px;
+            min-height: 400px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-row {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .upload-button {
+            background-color: #4051D3;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+        }
+
+        .upload-button:hover {
+            background-color: #3444b5;
+        }
+
+        .back-button {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            border: 1px solid #e1e1e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="notifi-logo">
+                <img src="images/notifi-logo.png" alt="Notifi">
+                <div class="logo-text">Notifi</div>
+            </div>
+            <div class="fisk-logo">
+                <img src="images/fisk-logo.png" alt="Fisk University">
+            </div>
+        </div>
+        <div class="user-profile">
+            <div class="avatar">
+                <img src="images/profile-pic.png" alt="User" id="userAvatar">
+            </div>
+            <div class="user-name" id="userName">Frank Inyiama</div>
+        </div>
+        <div class="nav-menu">
+            <a href="#" class="nav-item active">
+                <img src="images/icons/scan.png" alt="Scan Icon" class="nav-icon"> Scan
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/orders.png" alt="Orders Icon" class="nav-icon"> Orders
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/user.png" alt="Profile Icon" class="nav-icon"> Pick Up
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/user.png" alt="Profile Icon" class="nav-icon"> Profile
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/settings.png" alt="Settings Icon" class="nav-icon"> Settings
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/help.png" alt="Help Icon" class="nav-icon"> Help
+            </a>
+            <a href="#" class="nav-item" id="logoutButton">
+                <img src="images/icons/logout.png" alt="Logout Icon" class="nav-icon"> Logout
+            </a>
+        </div>
+    </div>
+    <div class="main-content">
+        <h1 class="page-title">Confirm Information</h1>
+        <div class="confirm-container">
+            <h2 class="section-title">Package Details</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="recipientName">Recipient Name</label>
+                    <input type="text" id="recipientName" value="Emmanuel Adeyemi">
+                </div>
+                <div class="form-group">
+                    <label for="senderName">Sender Name</label>
+                    <input type="text" id="senderName" value="Amazon">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="recipientAddress">Recipient Address</label>
+                <input type="text" id="recipientAddress" value="1000 17th Avenue North, Nashville TN 37208">
+            </div>
+
+            <div class="form-group">
+                <label for="sender">Sender Name</label>
+                <input type="text" id="sender" value="Amazon Warehouse, Seattle, WA">
+            </div>
+
+            <div class="form-group">
+                <label for="extraDetails">Extra Details</label>
+                <textarea id="extraDetails">Fragile. Do not drop</textarea>
+            </div>
+
+            <div style="text-align: right;">
+                <button class="upload-button" id="uploadButton">Upload</button>
+            </div>
+        </div>
+        <div class="back-button" id="backButton">
+            <span>←</span>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const backButton = document.getElementById('backButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const uploadButton = document.getElementById('uploadButton');
+        
+        // User data - would normally come from backend
+        let userData = {
+            name: "Frank Inyiama",
+            id: "12345",
+            role: "mailroom-staff"
+        };
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set user name from data (would be from backend in production)
+            document.getElementById('userName').textContent = userData.name;
+            
+            // Navigation handling
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (!this.classList.contains('active') && this.id !== 'logoutButton') {
+                        document.querySelector('.nav-item.active').classList.remove('active');
+                        this.classList.add('active');
+                        // In production, this would navigate to different views/pages
+                        console.log('Navigate to:', this.textContent.trim());
+                    }
+                });
+            });
+            
+            // Logout button handling
+            logoutButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                // In production, this would handle logout logic with the backend
+                console.log('Logging out...');
+                window.location.href = 'index.html'; // Redirect to login page
+            });
+            
+            // Back button
+            backButton.addEventListener('click', function() {
+                // Go back to the scanning interface
+                console.log('Going back to scanning page...');
+                window.location.href = 'scan.html';
+            });
+            
+            // Upload button
+            uploadButton.addEventListener('click', function() {
+                console.log('Uploading package information...');
+                // In production, this would send the form data to the backend
+                alert('Package information uploaded successfully!');
+                // Redirect to appropriate page after successful upload
+                window.location.href = 'scan.html'; // Go back to scan page after uploading
+            });
+        });
+    </script>
+</body>
+</html>
