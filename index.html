@@ -1,0 +1,228 @@
+<!-- CSS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifi - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #4051D3;
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 2rem;
+        }
+
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .logo-text {
+            font-size: 3rem;
+            font-weight: bold;
+            /* margin-bottom: 0.5rem; */
+        }
+
+        .description {
+            font-size: 1.5rem;
+            /* line-height: 1.5; */
+        }
+
+        .main-content {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2rem 8rem 2rem 4rem;
+        }
+
+        .login-form {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e1e1e1;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            font-size: 1rem;
+        }
+
+        .password-requirement {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+        }
+
+        .remember-me input {
+            margin-right: 0.5rem;
+        }
+
+        .forgot-password {
+            color: #4051D3;
+            text-decoration: none;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4051D3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-button:hover {
+            background-color: #3444b5;
+        }
+
+        .signup-link {
+            text-align: center;
+        }
+
+        .signup-link a {
+            color: #4051D3;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                padding: 2rem 1rem;
+            }
+            .main-content {
+                width: 100%;
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+
+<!-- HTML Code -->
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="images/notifi-logo.png" alt="Notifi Logo" width="80" height="80"/>
+            </div>
+            <div class="logo-text">Notifi</div>
+        </div>
+        <div class="description">
+            An Automated Notification System for Fisk Mailroom
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="login-form">
+            <h1>Log In</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Fisk Email</label>
+                    <input type="email" id="email" name="email" placeholder="fiskuniversity@my.fisk.edu" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="fiskuniversity1866!" required>
+                    <div class="password-requirement">It must be a combination of minimum 8 letters, numbers, and symbols.</div>
+                </div>
+                <div class="form-footer">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                <button type="submit" class="login-button">Log In</button>
+                <div class="signup-link">
+                    No account yet? <a href="#">Sign Up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // This is where you would typically send the login data to a server
+            // For demonstration purposes, we're just logging to console
+            console.log('Login attempt:', { email, password });
+            
+            // You would normally handle the response from the server here
+            alert('Login functionality would be implemented on the backend.');
+        });
+    </script> -->
+</body>
+</html>
+

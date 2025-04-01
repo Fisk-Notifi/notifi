@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifi - Orders</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: white;
+            border-right: 1px solid #e1e1e1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .notifi-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .notifi-logo img {
+            height: 20px;
+        }
+
+        .logo-text {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #4051D3;
+        }
+
+        .fisk-logo img {
+            height: 30px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .avatar img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: black;
+            font-size: 16px;
+            padding: 10px;
+            transition: background 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #f0f0f0;
+        }
+
+        .nav-item.active {
+            background-color: #f0f0f0;
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            background-color: #f0f0f0;
+            padding: 20px;
+            position: relative;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Orders specific styling */
+        .orders-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .filters {
+            display: flex;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-tab {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .filter-tab:hover {
+            background-color: #f0f0f0;
+        }
+
+        .filter-tab.active {
+            background-color: #4051D3;
+            color: white;
+        }
+
+        .filter-count {
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .filter-tab.active .filter-count {
+            background-color: white;
+            color: #4051D3;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 8px 12px;
+            width: 300px;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            margin-left: 8px;
+            outline: none;
+            width: 100%;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table th, 
+        .orders-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .orders-table th {
+            background-color: #f5f5f5;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .orders-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .orders-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-delivered {
+            background-color: #e6f7e6;
+            color: #2c7a2c;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background-color: #e1f5fe;
+            color: #0277bd;
+        }
+
+        .action-button {
+            background-color: #4051D3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .action-button:hover {
+            background-color: #333faa;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+
+        .page-button {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-button.active {
+            background-color: #4051D3;
+            color: white;
+            border-color: #4051D3;
+        }
+
+        .page-button:hover:not(.active) {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="notifi-logo">
+                <img src="images/notifi-logo.png" alt="Notifi">
+                <div class="logo-text">Notifi</div>
+            </div>
+            <div class="fisk-logo">
+                <img src="images/fisk-logo.png" alt="Fisk University">
+            </div>
+        </div>
+        <div class="user-profile">
+            <div class="avatar">
+                <img src="images/profile-pic.png" alt="User" id="userAvatar">
+            </div>
+            <div class="user-name" id="userName">Frank Inyiama</div>
+        </div>
+        <div class="nav-menu">
+            <a href="scan.html" class="nav-item">
+                <img src="images/icons/scan.png" alt="Scan Icon" class="nav-icon"> Scan
+            </a>
+            <a href="#" class="nav-item active">
+                <img src="images/icons/orders.png" alt="Orders Icon" class="nav-icon"> Orders
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/user.png" alt="Profile Icon" class="nav-icon"> Profile
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/settings.png" alt="Settings Icon" class="nav-icon"> Settings
+            </a>
+            <a href="#" class="nav-item">
+                <img src="images/icons/help.png" alt="Help Icon" class="nav-icon"> Help
+            </a>
+            <a href="#" class="nav-item" id="logoutButton">
+                <img src="images/icons/logout.png" alt="Logout Icon" class="nav-icon"> Logout
+            </a>
+        </div>
+    </div>
+    <div class="main-content">
+        <h1 class="page-title">Orders</h1>
+        <div class="orders-container">
+            <div class="filters">
+                <div class="filter-tabs">
+                    <button class="filter-tab active">
+                        All <span class="filter-count">60</span>
+                    </button>
+                    <button class="filter-tab">
+                        Current <span class="filter-count">12</span>
+                    </button>
+                    <button class="filter-tab">
+                        Picked Up <span class="filter-count">45</span>
+                    </button>
+                    <button class="filter-tab">
+                        Overdue <span class="filter-count">3</span>
+                    </button>
+                </div>
+                <div class="search-box">
+                    <img src="images/icons/search.png" alt="Search" width="16" height="16">
+                    <input type="text" placeholder="Search by ID, name, or tracking number...">
+                </div>
+            </div>
+            
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Student Name</th>
+                        <th>Sender Info</th>
+                        <th>Student Email</th>
+                        <th>Latest Pickup Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#ORD-001</td>
+                        <td>John Smith</td>
+                        <td>Amazon</td>
+                        <td>jsmith@fisk.edu</td>
+                        <td>May 22, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-002</td>
+                        <td>Sarah Johnson</td>
+                        <td>USPS</td>
+                        <td>sjohnson@fisk.edu</td>
+                        <td>May 23, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-003</td>
+                        <td>Michael Brown</td>
+                        <td>FedEx</td>
+                        <td>mbrown@fisk.edu</td>
+                        <td>May 23, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-004</td>
+                        <td>Emily Davis</td>
+                        <td>UPS</td>
+                        <td>edavis@fisk.edu</td>
+                        <td>May 24, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-005</td>
+                        <td>Robert Wilson</td>
+                        <td>DHL</td>
+                        <td>rwilson@fisk.edu</td>
+                        <td>May 24, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-006</td>
+                        <td>Jennifer Lee</td>
+                        <td>Amazon</td>
+                        <td>jlee@fisk.edu</td>
+                        <td>May 25, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-007</td>
+                        <td>David Clark</td>
+                        <td>FedEx</td>
+                        <td>dclark@fisk.edu</td>
+                        <td>May 25, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-008</td>
+                        <td>Amanda Taylor</td>
+                        <td>USPS</td>
+                        <td>ataylor@fisk.edu</td>
+                        <td>May 26, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-009</td>
+                        <td>Kevin Harris</td>
+                        <td>UPS</td>
+                        <td>kharris@fisk.edu</td>
+                        <td>May 26, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-010</td>
+                        <td>Sophia Martinez</td>
+                        <td>Amazon</td>
+                        <td>smartinez@fisk.edu</td>
+                        <td>May 27, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-011</td>
+                        <td>William Jackson</td>
+                        <td>DHL</td>
+                        <td>wjackson@fisk.edu</td>
+                        <td>May 27, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-012</td>
+                        <td>Olivia Thompson</td>
+                        <td>USPS</td>
+                        <td>othompson@fisk.edu</td>
+                        <td>May 28, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                    <tr>
+                        <td>#ORD-013</td>
+                        <td>Daniel Robinson</td>
+                        <td>Amazon</td>
+                        <td>drobinson@fisk.edu</td>
+                        <td>May 28, 2023</td>
+                        <td><button class="action-button">Pick Up</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <button class="page-button">«</button>
+                <button class="page-button active">1</button>
+                <button class="page-button">2</button>
+                <button class="page-button">3</button>
+                <button class="page-button">»</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const logoutButton = document.getElementById('logoutButton');
+        
+        // User data - would normally come from backend
+        let userData = {
+            name: "Frank Inyiama",
+            id: "12345",
+            role: "mailroom-staff"
+        };
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set user name from data (would be from backend in production)
+            document.getElementById('userName').textContent = userData.name;
+            
+            // Filter tab handling
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        document.querySelector('.filter-tab.active').classList.remove('active');
+                        this.classList.add('active');
+                        console.log('Filter changed to:', this.textContent.trim().split(' ')[0]);
+                        // This would typically filter the table based on the selected tab
+                    }
+                });
+            });
+            
+            // Navigation handling
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (!this.classList.contains('active') && this.id !== 'logoutButton') {
+                        document.querySelector('.nav-item.active').classList.remove('active');
+                        this.classList.add('active');
+                    }
+                });
+            });
+            
+            // Logout button handling
+            logoutButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                // In production, this would handle logout logic with the backend
+                console.log('Logging out...');
+                window.location.href = 'index.html'; // Redirect to login page
+            });
+            
+            // Pick Up action
+            document.querySelectorAll('.action-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const orderId = row.querySelector('td:first-child').textContent;
+                    const studentName = row.querySelector('td:nth-child(2)').textContent;
+                    console.log('Package picked up:', orderId);
+                    // This would typically mark the package as picked up in the database
+                    alert(`Package ${orderId} has been marked as picked up by ${studentName}.`);
+                    // You could also remove the row or update its appearance
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.querySelector('.search-box input');
+            searchInput.addEventListener('input', function() {
+                console.log('Searching for:', this.value);
+                // This would typically filter the table based on search input
+            });
+            
+            // Pagination functionality
+            document.querySelectorAll('.page-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        document.querySelector('.page-button.active').classList.remove('active');
+                        this.classList.add('active');
+                        console.log('Page changed to:', this.textContent);
+                        // This would typically fetch and display a different page of orders
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
