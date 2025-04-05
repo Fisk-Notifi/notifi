@@ -1,0 +1,295 @@
+<!-- CSS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifi - signup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #4051D3;
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 2rem;
+        }
+
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .logo-text {
+            font-size: 3rem;
+            font-weight: bold;
+            /* margin-bottom: 0.5rem; */
+        }
+
+        .description {
+            font-size: 1.5rem;
+            /* line-height: 1.5; */
+        }
+
+        .main-content {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2rem 8rem 2rem 4rem;
+        }
+
+        .signup-form {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e1e1e1;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            font-size: 1rem;
+        }
+
+        .password-requirement {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+
+        .signup-button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4051D3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+
+        .signup-button:hover {
+            background-color: #3444b5;
+        }
+
+        .signup-link {
+            text-align: center;
+        }
+
+        .signup-link a {
+            color: #4051D3;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+        }
+
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                padding: 2rem 1rem;
+            }
+            .main-content {
+                width: 100%;
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+
+<!-- HTML Code -->
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/notifi-logo.png') }}" alt="Notifi Logo" width="80" height="80"/>
+            </div>
+            <div class="logo-text">Notifi</div>
+        </div>
+        <div class="description">
+            An Automated Notification System for Fisk Mailroom
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="signup-form">
+            <h1>Sign Up</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('signup') }}">
+                {{ form.csrf_token }}
+                
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    {{ form.first_name(class="form-control", id="first_name", placeholder="First Name") }}
+                    {% if form.first_name.errors %}
+                        <div class="error">{{ form.first_name.errors[0] }}</div>
+                    {% endif %}
+                </div>
+    
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    {{ form.last_name(class="form-control", id="last_name", placeholder="Last Name") }}
+                    {% if form.last_name.errors %}
+                        <div class="error">{{ form.last_name.errors[0] }}</div>
+                    {% endif %}
+                </div>
+    
+                <div class="form-group">
+                    <label for="email">Fisk Email</label>
+                    {{ form.email(class="form-control", id="email", placeholder="fiskuniversity@my.fisk.edu") }}
+                    {% if form.email.errors %}
+                        <div class="error">{{ form.email.errors[0] }}</div>
+                    {% endif %}
+                </div>
+    
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    {{ form.password(class="form-control", id="password", placeholder="••••••••") }}
+                    <div class="password-requirement">It must be a combination of minimum 8 letters, numbers, and symbols.</div>
+                    {% if form.password.errors %}
+                        <div class="error">{{ form.password.errors[0] }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    {{ form.confirm_password(class="form-control", id="confirm_password", placeholder="••••••••") }}
+                    {% if form.confirm_password.errors %}
+                        <div class="error">{{ form.confirm_password.errors[0] }}</div>
+                    {% endif %}
+                </div>
+    
+                {{ form.submit(class="signup-button") }}
+                <div class="signup-link">
+                    Have an account? <a href="{{ url_for('index') }}">Login Here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- <div class="main-content">
+        <div class="signup-form">
+            <h1>Sign Up</h1>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" name="first-name" placeholder="First Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" name="last-name" placeholder="Last Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Fisk Email</label>
+                    <input type="email" id="email" name="email" placeholder="fiskuniversity@my.fisk.edu" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="fiskuniversity1866!" required>
+                    <div class="password-requirement">It must be a combination of minimum 8 letters, numbers, and symbols.</div>
+                </div>
+
+                <button type="submit" class="signup-button">Sign Up</button>
+                <div class="signup-link">
+                    Have an account? <a href="./index.html">Login Here</a>
+                </div>
+            </form>
+        </div>
+    </div> -->
+
+
+
+</body>
+</html>
+

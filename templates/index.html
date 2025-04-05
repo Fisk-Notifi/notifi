@@ -90,6 +90,14 @@
             background-color: #f8f9fa;
             font-size: 1rem;
         }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e1e1e1;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            font-size: 1rem;
+        }
 
         .password-requirement {
             font-size: 0.8rem;
@@ -172,7 +180,7 @@
     <div class="sidebar">
         <div class="logo-container">
             <div class="logo">
-                <img src="images/notifi-logo.png" alt="Notifi Logo" width="80" height="80"/>
+                <img src="{{ url_for('static', filename='images/notifi-logo.png') }}" alt="Notifi Logo" width="80" height="80"/>
             </div>
             <div class="logo-text">Notifi</div>
         </div>
@@ -180,7 +188,50 @@
             An Automated Notification System for Fisk Mailroom
         </div>
     </div>
+<!-- Keep your existing CSS and sidebar code unchanged -->
+
     <div class="main-content">
+        <div class="login-form">
+            <h1>Log In</h1>
+            <!-- Include flash messages for debugging -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('login') }}">
+                {{ form.csrf_token }}
+
+                <div class="form-group" id="email">
+                    <label for="email">Fisk Email</label>
+                    {{ form.email(class="form-control", id="email", placeholder="fiskuniversity@my.fisk.edu") }}
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    {{ form.password(class="form-control", id="password", placeholder="••••••••") }}
+                    <div class="password-requirement">It must be a combination of minimum 8 letters, numbers, and symbols.</div>
+                </div>
+
+                <div class="form-footer">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                {{ form.submit(class="login-button") }}
+                <div class="signup-link">
+                    No account yet? <a href="{{ url_for('signup') }}">Sign Up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- <div class="main-content">
         <div class="login-form">
             <h1>Log In</h1>
             <form id="loginForm">
@@ -202,27 +253,13 @@
                 </div>
                 <button type="submit" class="login-button">Log In</button>
                 <div class="signup-link">
-                    No account yet? <a href="#">Sign Up</a>
+                    No account yet? <a href="./signup.html">Sign Up</a>
                 </div>
             </form>
         </div>
-    </div>
+    </div> -->
 
-    <!-- <script>
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            // This is where you would typically send the login data to a server
-            // For demonstration purposes, we're just logging to console
-            console.log('Login attempt:', { email, password });
-            
-            // You would normally handle the response from the server here
-            alert('Login functionality would be implemented on the backend.');
-        });
-    </script> -->
+
 </body>
 </html>
 
