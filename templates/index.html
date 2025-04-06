@@ -42,12 +42,10 @@
         .logo-text {
             font-size: 3rem;
             font-weight: bold;
-            /* margin-bottom: 0.5rem; */
         }
 
         .description {
             font-size: 1.5rem;
-            /* line-height: 1.5; */
         }
 
         .main-content {
@@ -159,6 +157,32 @@
             text-decoration: underline;
         }
 
+        /* this is for the error messages */
+        .error {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+        }
+
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -175,7 +199,6 @@
     </style>
 </head>
 
-<!-- HTML Code -->
 <body>
     <div class="sidebar">
         <div class="logo-container">
@@ -188,12 +211,10 @@
             An Automated Notification System for Fisk Mailroom
         </div>
     </div>
-<!-- Keep your existing CSS and sidebar code unchanged -->
 
     <div class="main-content">
         <div class="login-form">
             <h1>Log In</h1>
-            <!-- Include flash messages for debugging -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -230,35 +251,6 @@
             </form>
         </div>
     </div>
-
-    <!-- <div class="main-content">
-        <div class="login-form">
-            <h1>Log In</h1>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">Fisk Email</label>
-                    <input type="email" id="email" name="email" placeholder="fiskuniversity@my.fisk.edu" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="fiskuniversity1866!" required>
-                    <div class="password-requirement">It must be a combination of minimum 8 letters, numbers, and symbols.</div>
-                </div>
-                <div class="form-footer">
-                    <div class="remember-me">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember">Remember me</label>
-                    </div>
-                    <a href="#" class="forgot-password">Forgot Password?</a>
-                </div>
-                <button type="submit" class="login-button">Log In</button>
-                <div class="signup-link">
-                    No account yet? <a href="./signup.html">Sign Up</a>
-                </div>
-            </form>
-        </div>
-    </div> -->
-
 
 </body>
 </html>
