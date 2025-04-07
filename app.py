@@ -75,17 +75,17 @@ def login():
             user = User.query.filter_by(email=form.email.data).first()
             if user and bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
-                return redirect(url_for('successfullogintest'))
+                return redirect(url_for('scan'))
             else:
                 flash('Login unsuccessful. Please check email and password', 'danger')            
                 return redirect(url_for('index'))
         
     return render_template('index.html', form=form)
 
-@app.route('/successfullogintest', methods=['GET', 'POST'])
+@app.route('/scan')
 @login_required
-def successfullogintest():
-    return render_template('successfullogintest.html')
+def scan():
+    return render_template('scan.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
