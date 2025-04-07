@@ -127,12 +127,14 @@
             background-color: white;
             border-radius: 8px;
             padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
             min-height: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            text-align: center; /* Ensures text and elements are centered */
+            justify-content: flex-start;
         }
 
         .scan-icon {
@@ -170,16 +172,65 @@
             background-color: #3444b5;
         }
 
-
         .camera-feed {
             width: 100%;
-            max-width: 500px;
-            height: 350px;
-            background-color: #eee;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            display: none; /* Initially hidden, will be shown when scanning */
+            max-width: 800px;
+            height: 600px;
+            background-color: #000;
+            border-radius: 8px;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .camera-feed video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .capture-button {
+            background-color: #fff;
+            border: 3px solid #4051D3;
+            color: #4051D3;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .capture-button:hover {
+            background-color: #4051D3;
+            color: white;
+        }
+
+        .capture-button::before {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: currentColor;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .capture-button:active::before {
+            width: 56px;
+            height: 56px;
+        }
+
+        .camera-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
         }
 
         .back-button {
@@ -255,7 +306,9 @@
             </div>
             <div id="scannerInterface" style="display: none; width: 100%; text-align: center;">
                 <div class="camera-feed" id="cameraFeed"></div>
-                <button class="scan-button" id="captureScanButton">Capture</button>
+                <div class="camera-controls">
+                    <button class="capture-button" id="captureScanButton"></button>
+                </div>
             </div>
         </div>
         <div class="back-button" id="backButton">
@@ -272,6 +325,9 @@
         const captureScanButton = document.getElementById('captureScanButton');
         const backButton = document.getElementById('backButton');
         const logoutButton = document.getElementById('logoutButton');
+        
+        // Camera stream variable
+        let stream = null;
         
         // User data - would normally come from backend
         let userData = {
@@ -317,45 +373,84 @@
             
             // Back button
             backButton.addEventListener('click', function() {
-                // In production, this might do different things based on context
-                console.log('Going back...');
-                // For demo purposes, just hide scanner if it's showing
-                if (scannerInterface.style.display !== 'none') {
-                    stopScanning();
-                }
+                stopScanning();
             });
         });
         
-        // Simulated scanning functions - would be replaced with actual camera API in production
-        function startScanning() {
-            scanPlaceholder.style.display = 'none';
-            scannerInterface.style.display = 'block';
-            
-            // Simulate camera feed - in production, this would use camera API
-            cameraFeed.style.display = 'block';
-            cameraFeed.style.backgroundColor = '#000';
-            
-            // Mock video element or camera integration
-            // In a real implementation, you would use:
-            // navigator.mediaDevices.getUserMedia({ video: true })
-            // to access the device camera
-            
-            console.log('Scanning started...');
+        // Camera handling functions
+        async function startScanning() {
+            try {
+                // Request camera access
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Prefer rear camera on mobile devices
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
+                });
+                
+                // Create video element for camera feed
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true; // Important for iOS
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                
+                // Clear previous content and add video element
+                cameraFeed.innerHTML = '';
+                cameraFeed.appendChild(video);
+                
+                // Show scanner interface
+                scanPlaceholder.style.display = 'none';
+                scannerInterface.style.display = 'block';
+                cameraFeed.style.display = 'block';
+                
+                console.log('Camera started successfully');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please make sure you have granted camera permissions.');
+            }
         }
         
         function stopScanning() {
+            // Stop all tracks in the stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            // Reset UI
             scannerInterface.style.display = 'none';
             scanPlaceholder.style.display = 'block';
-            
-            // Clean up camera resources
             cameraFeed.style.display = 'none';
-            console.log('Scanning stopped');
+            cameraFeed.innerHTML = '';
+            
+            console.log('Camera stopped');
         }
         
         function captureLabel() {
-            console.log('Label captured!');
+            if (!stream) {
+                alert('Camera is not active');
+                return;
+            }
             
-            // In production, this would send the captured image to the backend
+            // Create canvas to capture frame
+            const video = cameraFeed.querySelector('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw current video frame to canvas
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to image data
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            console.log('Label captured!');
+            // In production, this would send imageData to the backend
             // for processing and then display results or next steps
             
             // Simulate successful scan for demo
