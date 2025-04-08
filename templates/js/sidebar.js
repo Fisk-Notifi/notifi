@@ -1,16 +1,27 @@
 // sidebar.js - Shared sidebar functionality across all pages
 
-// User data - would normally come from backend
-let userData = {
-    name: "Frank Inyiama",
-    id: "12345",
-    role: "mailroom-staff"
-};
-
 // Initialize sidebar when DOM is loaded
 function initializeSidebar(currentPage) {
-    // Set user name from data (would be from backend in production)
-    document.getElementById('userName').textContent = userData.name;
+    // Get user data from local storage if available
+    let firstName = localStorage.getItem('firstName');
+    let lastName = localStorage.getItem('lastName');
+    
+    // Set user name or use default if not available
+    let displayName = 'Guest User';
+    if (firstName && lastName) {
+        displayName = firstName + ' ' + lastName;
+    } else if (firstName) {
+        displayName = firstName;
+    } else if (localStorage.getItem('userName')) {
+        // Fallback to previously stored userName if available
+        displayName = localStorage.getItem('userName');
+    }
+    
+    // Set the user name in the sidebar
+    document.getElementById('userName').textContent = displayName;
+    
+    // Store the display name for future use
+    localStorage.setItem('userName', displayName);
     
     // Set active navigation item based on current page
     setActiveNavItem(currentPage);
@@ -29,6 +40,11 @@ function initializeSidebar(currentPage) {
     if (logoutButton) {
         logoutButton.addEventListener('click', function(e) {
             e.preventDefault();
+            // Clear user data on logout
+            localStorage.removeItem('firstName');
+            localStorage.removeItem('lastName');
+            localStorage.removeItem('userName');
+            
             // In production, this would handle logout logic with the backend
             console.log('Logging out...');
             window.location.href = 'index.html'; // Redirect to login page
