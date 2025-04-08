@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifi - Scan Label</title>
+    <link rel="stylesheet" href="css/sidebar.css">
     <style>
         * {
             margin: 0;
@@ -15,98 +16,6 @@
         body {
             display: flex;
             min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 200px;
-            background-color: white;
-            border-right: 1px solid #e1e1e1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px;
-            border-bottom: 1px solid #e1e1e1;
-        }
-
-        .notifi-logo {
-            display: flex;
-            align-items: center;
-        }
-
-        .notifi-logo img {
-            height: 20px;
-        }
-
-        .logo-text {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #4051D3;
-            /* margin-bottom: 0.5rem; */
-        }
-
-        .fisk-logo img {
-            height: 30px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e1e1e1;
-        }
-
-        .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-        }
-
-        .avatar img {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .nav-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: black;
-            font-size: 16px;
-            padding: 10px;
-            transition: background 0.3s;
-        }
-
-        .nav-item:hover {
-            background: #f0f0f0;
-        }
-
-        .nav-icon {
-            width: 20px; /* Adjust the size as needed */
-            height: 20px;
-            margin-right: 10px;
         }
 
         .main-content {
@@ -127,12 +36,22 @@
             background-color: white;
             border-radius: 8px;
             padding: 30px;
+            width: 100%;
+            margin: 0 auto;
             min-height: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center; /* Ensures text and elements are centered */
+        }
+
+        #scanPlaceholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            text-align: center;
         }
 
         .scan-icon {
@@ -170,16 +89,65 @@
             background-color: #3444b5;
         }
 
-
         .camera-feed {
             width: 100%;
-            max-width: 500px;
-            height: 350px;
-            background-color: #eee;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            display: none; /* Initially hidden, will be shown when scanning */
+            max-width: 800px;
+            height: 600px;
+            background-color: #000;
+            border-radius: 8px;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .camera-feed video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .capture-button {
+            background-color: #fff;
+            border: 3px solid #4051D3;
+            color: #4051D3;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .capture-button:hover {
+            background-color: #4051D3;
+            color: white;
+        }
+
+        .capture-button::before {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: currentColor;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .capture-button:active::before {
+            width: 56px;
+            height: 56px;
+        }
+
+        .camera-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
         }
 
         .back-button {
@@ -206,43 +174,9 @@
 
 
 <body>
-    <div class="sidebar">
-        <div class="logo-container">
-            <div class="notifi-logo">
-                <img src="static/images/notifi-logo.png" alt="Notifi">
-                <div class="logo-text">Notifi</div>
-            </div>
-            <div class="fisk-logo">
-                <img src="static/images/fisk-logo.png" alt="Fisk University">
-            </div>
-        </div>
-        <div class="user-profile">
-            <div class="avatar">
-                <img src="static/images/profile-pic.png" alt="User" id="userAvatar">
-            </div>
-            <div class="user-name" id="userName">Frank Inyiama</div>
-        </div>
-        <div class="nav-menu">
-            <a href="#" class="nav-item active">
-                <img src="static/images/icons/scan.png" alt="Scan Icon" class="nav-icon"> Scan
-            </a>
-            <a href="#" class="nav-item">
-                <img src="static/images/icons/orders.png" alt="Orders Icon" class="nav-icon"> Orders
-            </a>
-            <a href="#" class="nav-item">
-                <img src="static/images/icons/user.png" alt="Profile Icon" class="nav-icon"> Profile
-            </a>
-            <a href="#" class="nav-item">
-                <img src="static/images/icons/settings.png" alt="Settings Icon" class="nav-icon"> Settings
-            </a>
-            <a href="#" class="nav-item">
-                <img src="static/images/icons/help.png" alt="Help Icon" class="nav-icon"> Help
-            </a>
-            <a href="#" class="nav-item" id="logoutButton">
-                <img src="static/images/icons/logout.png" alt="Logout Icon" class="nav-icon"> Logout
-            </a>
-        </div>
-    </div>
+    <!-- Include the sidebar -->
+    <div id="sidebar-container"></div>
+    
     <div class="main-content">
         <h1 class="page-title">Scan Label</h1>
         <div class="scan-container">
@@ -255,7 +189,9 @@
             </div>
             <div id="scannerInterface" style="display: none; width: 100%; text-align: center;">
                 <div class="camera-feed" id="cameraFeed"></div>
-                <button class="scan-button" id="captureScanButton">Capture</button>
+                <div class="camera-controls">
+                    <button class="capture-button" id="captureScanButton"></button>
+                </div>
             </div>
         </div>
         <div class="back-button" id="backButton">
@@ -263,6 +199,8 @@
         </div>
     </div>
 
+    <!-- Include the sidebar JS -->
+    <script src="js/sidebar.js"></script>
     <script>
         // DOM elements
         const startScanButton = document.getElementById('startScanButton');
@@ -271,91 +209,114 @@
         const cameraFeed = document.getElementById('cameraFeed');
         const captureScanButton = document.getElementById('captureScanButton');
         const backButton = document.getElementById('backButton');
-        const logoutButton = document.getElementById('logoutButton');
         
-        // User data - would normally come from backend
-        let userData = {
-            name: "Frank Inyiama",
-            id: "12345",
-            role: "mailroom-staff"
-        };
+        // Camera stream variable
+        let stream = null;
         
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set user name from data (would be from backend in production)
-            document.getElementById('userName').textContent = userData.name;
-            
-            // Navigation handling
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (!this.classList.contains('active') && this.id !== 'logoutButton') {
-                        document.querySelector('.nav-item.active').classList.remove('active');
-                        this.classList.add('active');
-                        // In production, this would navigate to different views/pages
-                        console.log('Navigate to:', this.textContent.trim());
-                    }
+        // Load the sidebar
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Fetch and insert the sidebar HTML
+                const response = await fetch('partials/sidebar.html');
+                const html = await response.text();
+                document.getElementById('sidebar-container').innerHTML = html;
+                
+                // Initialize the sidebar with current page
+                initializeSidebar('scan');
+                
+                // Start scan button
+                startScanButton.addEventListener('click', function() {
+                    startScanning();
                 });
-            });
-            
-            // Logout button handling
-            logoutButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                // In production, this would handle logout logic with the backend
-                console.log('Logging out...');
-                window.location.href = 'index.html'; // Redirect to login page
-            });
-            
-            // Start scan button
-            startScanButton.addEventListener('click', function() {
-                startScanning();
-            });
-            
-            // Capture button
-            captureScanButton.addEventListener('click', function() {
-                captureLabel();
-            });
-            
-            // Back button
-            backButton.addEventListener('click', function() {
-                // In production, this might do different things based on context
-                console.log('Going back...');
-                // For demo purposes, just hide scanner if it's showing
-                if (scannerInterface.style.display !== 'none') {
+                
+                // Capture button
+                captureScanButton.addEventListener('click', function() {
+                    captureLabel();
+                });
+                
+                // Back button
+                backButton.addEventListener('click', function() {
                     stopScanning();
-                }
-            });
+                });
+            } catch (error) {
+                console.error('Error loading sidebar:', error);
+            }
         });
         
-        // Simulated scanning functions - would be replaced with actual camera API in production
-        function startScanning() {
-            scanPlaceholder.style.display = 'none';
-            scannerInterface.style.display = 'block';
-            
-            // Simulate camera feed - in production, this would use camera API
-            cameraFeed.style.display = 'block';
-            cameraFeed.style.backgroundColor = '#000';
-            
-            // Mock video element or camera integration
-            // In a real implementation, you would use:
-            // navigator.mediaDevices.getUserMedia({ video: true })
-            // to access the device camera
-            
-            console.log('Scanning started...');
+        // Camera handling functions
+        async function startScanning() {
+            try {
+                // Request camera access
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Prefer rear camera on mobile devices
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
+                });
+                
+                // Create video element for camera feed
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true; // Important for iOS
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                
+                // Clear previous content and add video element
+                cameraFeed.innerHTML = '';
+                cameraFeed.appendChild(video);
+                
+                // Show scanner interface
+                scanPlaceholder.style.display = 'none';
+                scannerInterface.style.display = 'block';
+                cameraFeed.style.display = 'block';
+                
+                console.log('Camera started successfully');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please make sure you have granted camera permissions.');
+            }
         }
         
         function stopScanning() {
+            // Stop all tracks in the stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            // Reset UI
             scannerInterface.style.display = 'none';
             scanPlaceholder.style.display = 'block';
-            
-            // Clean up camera resources
             cameraFeed.style.display = 'none';
-            console.log('Scanning stopped');
+            cameraFeed.innerHTML = '';
+            
+            console.log('Camera stopped');
         }
         
         function captureLabel() {
-            console.log('Label captured!');
+            if (!stream) {
+                alert('Camera is not active');
+                return;
+            }
             
-            // In production, this would send the captured image to the backend
+            // Create canvas to capture frame
+            const video = cameraFeed.querySelector('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw current video frame to canvas
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to image data
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            console.log('Label captured!');
+            // In production, this would send imageData to the backend
             // for processing and then display results or next steps
             
             // Simulate successful scan for demo
