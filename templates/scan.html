@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifi - Scan Label</title>
+    <link rel="stylesheet" href="css/sidebar.css">
     <style>
         * {
             margin: 0;
@@ -15,98 +16,6 @@
         body {
             display: flex;
             min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 200px;
-            background-color: white;
-            border-right: 1px solid #e1e1e1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px;
-            border-bottom: 1px solid #e1e1e1;
-        }
-
-        .notifi-logo {
-            display: flex;
-            align-items: center;
-        }
-
-        .notifi-logo img {
-            height: 20px;
-        }
-
-        .logo-text {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #4051D3;
-            /* margin-bottom: 0.5rem; */
-        }
-
-        .fisk-logo img {
-            height: 30px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e1e1e1;
-        }
-
-        .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-        }
-
-        .avatar img {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .nav-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: black;
-            font-size: 16px;
-            padding: 10px;
-            transition: background 0.3s;
-        }
-
-        .nav-item:hover {
-            background: #f0f0f0;
-        }
-
-        .nav-icon {
-            width: 20px; /* Adjust the size as needed */
-            height: 20px;
-            margin-right: 10px;
         }
 
         .main-content {
@@ -128,13 +37,21 @@
             border-radius: 8px;
             padding: 30px;
             width: 100%;
-            max-width: 900px;
             margin: 0 auto;
             min-height: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
+        }
+
+        #scanPlaceholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            text-align: center;
         }
 
         .scan-icon {
@@ -257,43 +174,9 @@
 
 
 <body>
-    <div class="sidebar">
-        <div class="logo-container">
-            <div class="notifi-logo">
-                <img src="images/notifi-logo.png" alt="Notifi">
-                <div class="logo-text">Notifi</div>
-            </div>
-            <div class="fisk-logo">
-                <img src="images/fisk-logo.png" alt="Fisk University">
-            </div>
-        </div>
-        <div class="user-profile">
-            <div class="avatar">
-                <img src="images/profile-pic.png" alt="User" id="userAvatar">
-            </div>
-            <div class="user-name" id="userName">Frank Inyiama</div>
-        </div>
-        <div class="nav-menu">
-            <a href="#" class="nav-item active">
-                <img src="images/icons/scan.png" alt="Scan Icon" class="nav-icon"> Scan
-            </a>
-            <a href="#" class="nav-item">
-                <img src="images/icons/orders.png" alt="Orders Icon" class="nav-icon"> Orders
-            </a>
-            <a href="#" class="nav-item">
-                <img src="images/icons/user.png" alt="Profile Icon" class="nav-icon"> Profile
-            </a>
-            <a href="#" class="nav-item">
-                <img src="images/icons/settings.png" alt="Settings Icon" class="nav-icon"> Settings
-            </a>
-            <a href="#" class="nav-item">
-                <img src="images/icons/help.png" alt="Help Icon" class="nav-icon"> Help
-            </a>
-            <a href="#" class="nav-item" id="logoutButton">
-                <img src="images/icons/logout.png" alt="Logout Icon" class="nav-icon"> Logout
-            </a>
-        </div>
-    </div>
+    <!-- Include the sidebar -->
+    <div id="sidebar-container"></div>
+    
     <div class="main-content">
         <h1 class="page-title">Scan Label</h1>
         <div class="scan-container">
@@ -316,6 +199,8 @@
         </div>
     </div>
 
+    <!-- Include the sidebar JS -->
+    <script src="js/sidebar.js"></script>
     <script>
         // DOM elements
         const startScanButton = document.getElementById('startScanButton');
@@ -324,57 +209,38 @@
         const cameraFeed = document.getElementById('cameraFeed');
         const captureScanButton = document.getElementById('captureScanButton');
         const backButton = document.getElementById('backButton');
-        const logoutButton = document.getElementById('logoutButton');
         
         // Camera stream variable
         let stream = null;
         
-        // User data - would normally come from backend
-        let userData = {
-            name: "Frank Inyiama",
-            id: "12345",
-            role: "mailroom-staff"
-        };
-        
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set user name from data (would be from backend in production)
-            document.getElementById('userName').textContent = userData.name;
-            
-            // Navigation handling
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (!this.classList.contains('active') && this.id !== 'logoutButton') {
-                        document.querySelector('.nav-item.active').classList.remove('active');
-                        this.classList.add('active');
-                        // In production, this would navigate to different views/pages
-                        console.log('Navigate to:', this.textContent.trim());
-                    }
+        // Load the sidebar
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Fetch and insert the sidebar HTML
+                const response = await fetch('partials/sidebar.html');
+                const html = await response.text();
+                document.getElementById('sidebar-container').innerHTML = html;
+                
+                // Initialize the sidebar with current page
+                initializeSidebar('scan');
+                
+                // Start scan button
+                startScanButton.addEventListener('click', function() {
+                    startScanning();
                 });
-            });
-            
-            // Logout button handling
-            logoutButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                // In production, this would handle logout logic with the backend
-                console.log('Logging out...');
-                window.location.href = 'index.html'; // Redirect to login page
-            });
-            
-            // Start scan button
-            startScanButton.addEventListener('click', function() {
-                startScanning();
-            });
-            
-            // Capture button
-            captureScanButton.addEventListener('click', function() {
-                captureLabel();
-            });
-            
-            // Back button
-            backButton.addEventListener('click', function() {
-                stopScanning();
-            });
+                
+                // Capture button
+                captureScanButton.addEventListener('click', function() {
+                    captureLabel();
+                });
+                
+                // Back button
+                backButton.addEventListener('click', function() {
+                    stopScanning();
+                });
+            } catch (error) {
+                console.error('Error loading sidebar:', error);
+            }
         });
         
         // Camera handling functions
