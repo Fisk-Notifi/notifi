@@ -255,6 +255,27 @@
         </div>
     </div>
 
+    <script>
+        // Store user data on signup
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signupForm');
+            if (signupForm) {
+                signupForm.addEventListener('submit', function(e) {
+                    const firstName = document.getElementById('first_name').value;
+                    const lastName = document.getElementById('last_name').value;
+                    
+                    if (firstName) {
+                        localStorage.setItem('firstName', firstName);
+                    }
+                    if (lastName) {
+                        localStorage.setItem('lastName', lastName);
+                    }
+                    
+                    // Let the form submission continue normally
+                });
+            }
+        });
+    </script>
 </body>
 </html>
 

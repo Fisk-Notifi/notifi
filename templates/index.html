@@ -252,6 +252,36 @@
         </div>
     </div>
 
+    <script>
+        // Store user data on successful login
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    // For demo purposes - in production this would come from the backend
+                    // Here we're just simulating storing user information based on email
+                    const email = document.getElementById('email').value;
+                    if (email) {
+                        // Extract name from email (just for demo)
+                        const nameFromEmail = email.split('@')[0];
+                        const nameParts = nameFromEmail.split('.');
+                        if (nameParts.length >= 2) {
+                            localStorage.setItem('firstName', capitalizeFirstLetter(nameParts[0]));
+                            localStorage.setItem('lastName', capitalizeFirstLetter(nameParts[1]));
+                        } else {
+                            localStorage.setItem('firstName', capitalizeFirstLetter(nameFromEmail));
+                        }
+                    }
+                    // Let the form submission continue normally
+                });
+            }
+        });
+
+        // Helper function to capitalize first letter
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+    </script>
 </body>
 </html>
 
