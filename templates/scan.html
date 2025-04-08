@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifi - Scan Label</title>
-    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <style>
         * {
             margin: 0;
@@ -175,14 +175,16 @@
 
 <body>
     <!-- Include the sidebar -->
-    <div id="sidebar-container"></div>
+    <!-- <div id="sidebar-container"></div> -->
+
+    {% include 'partials/sidebar.html' %}
     
     <div class="main-content">
         <h1 class="page-title">Scan Label</h1>
         <div class="scan-container">
             <div id="scanPlaceholder">
                 <div class="scan-icon">
-                    <img src="static/images/camera.png" alt="Scan Icon">
+                    <img src="{{ url_for('static', filename='images/camera.png') }}" alt="Scan Icon">
                 </div>
                 <p class="scan-instructions">Click the button below to scan a package label</p>
                 <button class="scan-button" id="startScanButton">Start Scanning</button>
@@ -200,7 +202,7 @@
     </div>
 
     <!-- Include the sidebar JS -->
-    <script src="js/sidebar.js"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script>
         // DOM elements
         const startScanButton = document.getElementById('startScanButton');
@@ -217,7 +219,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch('partials/sidebar.html');
+                const response = await fetch("partials/sidebar.html");
                 const html = await response.text();
                 document.getElementById('sidebar-container').innerHTML = html;
                 
