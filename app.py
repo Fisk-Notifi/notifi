@@ -13,6 +13,9 @@ from dotenv import load_dotenv
 import base64
 import json
 from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import event
+from sqlalchemy.sql import func
 
 load_dotenv()
 
@@ -40,17 +43,6 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), nullable=False)
     password = db.Column(db.String(150), nullable=False)
-
-class Package(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    recipient_name = db.Column(db.String(200), nullable=False)
-    sender_name = db.Column(db.String(200), nullable=True)
-    recipient_address = db.Column(db.String(300), nullable=True)
-    extra_details = db.Column(db.Text, nullable=True)
-    image_path = db.Column(db.String(300), nullable=True)
-    date_received = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    is_picked_up = db.Column(db.Boolean, default=False)
-    picked_up_date = db.Column(db.DateTime, nullable=True)
 
 class SignupForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
