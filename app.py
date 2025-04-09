@@ -90,6 +90,16 @@ def login():
 def scan():
     return render_template('scan.html')
 
+@app.route('/orders')
+@login_required
+def orders():
+    return render_template('orders.html')
+
+@app.route('/confirm')
+@login_required
+def confirm():
+    return render_template('confirm.html')
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = SignupForm()

@@ -47,7 +47,7 @@ function initializeSidebar(currentPage) {
             
             // In production, this would handle logout logic with the backend
             console.log('Logging out...');
-            window.location.href = 'index.html'; // Redirect to login page
+            window.location.href = '/'; // Redirect to login page
         });
     }
 }

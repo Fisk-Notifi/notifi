@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifi - Orders</title>
-    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <style>
         * {
             margin: 0;
@@ -222,7 +222,7 @@
                     </button>
                 </div>
                 <div class="search-box">
-                    <img src="images/icons/search.png" alt="Search" width="16" height="16">
+                    <img src="{{ url_for('static', filename='images/icons/search.png') }}" alt="Search" width="16" height="16">
                     <input type="text" placeholder="Search by ID, name, or tracking number...">
                 </div>
             </div>
@@ -357,7 +357,7 @@
     </div>
 
     <!-- Include the sidebar JS -->
-    <script src="js/sidebar.js"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script>
         // DOM elements for orders page
         
@@ -365,7 +365,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch('partials/sidebar.html');
+                const response = await fetch("{{ url_for('static', filename='partials/sidebar.html') }}");
                 const html = await response.text();
                 document.getElementById('sidebar-container').innerHTML = html;
                 
