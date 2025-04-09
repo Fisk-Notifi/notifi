@@ -2,20 +2,8 @@
 
 // Initialize sidebar when DOM is loaded
 function initializeSidebar(currentPage) {
-    // Get user data from local storage if available
-    let firstName = localStorage.getItem('firstName');
-    let lastName = localStorage.getItem('lastName');
-    
-    // Set user name or use default if not available
-    let displayName = 'Guest User';
-    if (firstName && lastName) {
-        displayName = firstName + ' ' + lastName;
-    } else if (firstName) {
-        displayName = firstName;
-    } else if (localStorage.getItem('userName')) {
-        // Fallback to previously stored userName if available
-        displayName = localStorage.getItem('userName');
-    }
+    // Always set display name to Admin
+    let displayName = 'Admin';
     
     // Set the user name in the sidebar
     document.getElementById('userName').textContent = displayName;
