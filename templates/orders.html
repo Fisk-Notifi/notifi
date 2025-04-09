@@ -231,118 +231,42 @@
                 <thead>
                     <tr>
                         <th>Order ID</th>
-                        <th>Student Name</th>
+                        <th>Recipient Name</th>
                         <th>Sender Info</th>
-                        <th>Student Email</th>
-                        <th>Latest Pickup Date</th>
+                        <th>Date Received</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>#ORD-001</td>
-                        <td>John Smith</td>
-                        <td>Amazon</td>
-                        <td>jsmith@fisk.edu</td>
-                        <td>May 22, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-002</td>
-                        <td>Sarah Johnson</td>
-                        <td>USPS</td>
-                        <td>sjohnson@fisk.edu</td>
-                        <td>May 23, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-003</td>
-                        <td>Michael Brown</td>
-                        <td>FedEx</td>
-                        <td>mbrown@fisk.edu</td>
-                        <td>May 23, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-004</td>
-                        <td>Emily Davis</td>
-                        <td>UPS</td>
-                        <td>edavis@fisk.edu</td>
-                        <td>May 24, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-005</td>
-                        <td>Robert Wilson</td>
-                        <td>DHL</td>
-                        <td>rwilson@fisk.edu</td>
-                        <td>May 24, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-006</td>
-                        <td>Jennifer Lee</td>
-                        <td>Amazon</td>
-                        <td>jlee@fisk.edu</td>
-                        <td>May 25, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-007</td>
-                        <td>David Clark</td>
-                        <td>FedEx</td>
-                        <td>dclark@fisk.edu</td>
-                        <td>May 25, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-008</td>
-                        <td>Amanda Taylor</td>
-                        <td>USPS</td>
-                        <td>ataylor@fisk.edu</td>
-                        <td>May 26, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-009</td>
-                        <td>Kevin Harris</td>
-                        <td>UPS</td>
-                        <td>kharris@fisk.edu</td>
-                        <td>May 26, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-010</td>
-                        <td>Sophia Martinez</td>
-                        <td>Amazon</td>
-                        <td>smartinez@fisk.edu</td>
-                        <td>May 27, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-011</td>
-                        <td>William Jackson</td>
-                        <td>DHL</td>
-                        <td>wjackson@fisk.edu</td>
-                        <td>May 27, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-012</td>
-                        <td>Olivia Thompson</td>
-                        <td>USPS</td>
-                        <td>othompson@fisk.edu</td>
-                        <td>May 28, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
-                    <tr>
-                        <td>#ORD-013</td>
-                        <td>Daniel Robinson</td>
-                        <td>Amazon</td>
-                        <td>drobinson@fisk.edu</td>
-                        <td>May 28, 2023</td>
-                        <td><button class="action-button">Pick Up</button></td>
-                    </tr>
+                    {% if packages %}
+                        {% for package in packages %}
+                        <tr>
+                            <td>#ORD-{{ package.id }}</td>
+                            <td>{{ package.recipient_name }}</td>
+                            <td>{{ package.sender_name }}</td>
+                            <td>{{ package.date_received.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                {% if package.is_picked_up %}
+                                <span class="status status-delivered">Picked Up</span>
+                                {% else %}
+                                <span class="status status-pending">In Mail Room</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not package.is_picked_up %}
+                                <button class="action-button" data-package-id="{{ package.id }}">Mark as Picked Up</button>
+                                {% else %}
+                                <em>Picked up on {{ package.picked_up_date.strftime('%b %d, %Y') }}</em>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px;">No packages found</td>
+                        </tr>
+                    {% endif %}
                 </tbody>
             </table>
             
@@ -361,64 +285,94 @@
     <script>
         // DOM elements for orders page
         
-        // Load the sidebar
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize sidebar
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch("{{ url_for('static', filename='partials/sidebar.html') }}");
-                const html = await response.text();
-                document.getElementById('sidebar-container').innerHTML = html;
-                
-                // Initialize the sidebar with current page
-                initializeSidebar('orders');
-                
-                // Filter tab handling
-                document.querySelectorAll('.filter-tab').forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        if (!this.classList.contains('active')) {
-                            document.querySelector('.filter-tab.active').classList.remove('active');
-                            this.classList.add('active');
-                            console.log('Filter changed to:', this.textContent.trim().split(' ')[0]);
-                            // This would typically filter the table based on the selected tab
-                        }
+                const response = fetch("{{ url_for('static', filename='partials/sidebar.html') }}")
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('sidebar-container').innerHTML = html;
+                        // Initialize the sidebar with current page
+                        initializeSidebar('orders');
                     });
-                });
-                
-                // Pick Up action
-                document.querySelectorAll('.action-button').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const row = this.closest('tr');
-                        const orderId = row.querySelector('td:first-child').textContent;
-                        const studentName = row.querySelector('td:nth-child(2)').textContent;
-                        console.log('Package picked up:', orderId);
-                        // This would typically mark the package as picked up in the database
-                        alert(`Package ${orderId} has been marked as picked up by ${studentName}.`);
-                        // You could also remove the row or update its appearance
-                    });
-                });
-                
-                // Search functionality
-                const searchInput = document.querySelector('.search-box input');
-                searchInput.addEventListener('input', function() {
-                    console.log('Searching for:', this.value);
-                    // This would typically filter the table based on search input
-                });
-                
-                // Pagination functionality
-                document.querySelectorAll('.page-button').forEach(button => {
-                    button.addEventListener('click', function() {
-                        if (!this.classList.contains('active')) {
-                            document.querySelector('.page-button.active').classList.remove('active');
-                            this.classList.add('active');
-                            console.log('Page changed to:', this.textContent);
-                            // This would typically fetch and display a different page of orders
-                        }
-                    });
-                });
-                
             } catch (error) {
                 console.error('Error loading sidebar:', error);
             }
+            
+            // Filter tab handling
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        document.querySelector('.filter-tab.active').classList.remove('active');
+                        this.classList.add('active');
+                        console.log('Filter changed to:', this.textContent.trim().split(' ')[0]);
+                        // This would typically filter the table based on the selected tab
+                    }
+                });
+            });
+            
+            // Pick Up action
+            document.querySelectorAll('.action-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const packageId = this.getAttribute('data-package-id');
+                    
+                    if (confirm('Are you sure you want to mark this package as picked up?')) {
+                        // Send request to mark as picked up
+                        fetch(`/mark_picked_up/${packageId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Package has been marked as picked up.');
+                                // Reload the page to show updated status
+                                window.location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while updating the package status.');
+                        });
+                    }
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.querySelector('.search-box input');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchText = this.value.toLowerCase();
+                    const rows = document.querySelectorAll('.orders-table tbody tr');
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        if (text.includes(searchText)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+            // Pagination functionality
+            document.querySelectorAll('.page-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        document.querySelector('.page-button.active').classList.remove('active');
+                        this.classList.add('active');
+                        console.log('Page changed to:', this.textContent);
+                        // This would typically fetch and display a different page of orders
+                    }
+                });
+            });
+            
         });
     </script>
 </body>
