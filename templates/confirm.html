@@ -129,35 +129,33 @@
         <h1 class="page-title">Confirm Information</h1>
         <div class="confirm-container">
             <h2 class="section-title">Package Details</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="recipientName">Recipient Name</label>
-                    <input type="text" id="recipientName" value="Emmanuel Adeyemi">
+            
+            <form action="{{ url_for('save_package') }}" method="POST">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="recipientName">Recipient Name</label>
+                        <input type="text" id="recipientName" name="recipientName" value="Emmanuel Adeyemi" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="senderName">Sender Name</label>
+                        <input type="text" id="senderName" name="senderName" value="Amazon">
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="senderName">Sender Name</label>
-                    <input type="text" id="senderName" value="Amazon">
+                    <label for="recipientAddress">Recipient Address</label>
+                    <input type="text" id="recipientAddress" name="recipientAddress" value="1000 17th Avenue North, Nashville TN 37208">
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="recipientAddress">Recipient Address</label>
-                <input type="text" id="recipientAddress" value="1000 17th Avenue North, Nashville TN 37208">
-            </div>
+                <div class="form-group">
+                    <label for="extraDetails">Extra Details</label>
+                    <textarea id="extraDetails" name="extraDetails">Fragile. Do not drop</textarea>
+                </div>
 
-            <div class="form-group">
-                <label for="sender">Sender Name</label>
-                <input type="text" id="sender" value="Amazon Warehouse, Seattle, WA">
-            </div>
-
-            <div class="form-group">
-                <label for="extraDetails">Extra Details</label>
-                <textarea id="extraDetails">Fragile. Do not drop</textarea>
-            </div>
-
-            <div style="text-align: right;">
-                <button class="upload-button" id="uploadButton">Upload</button>
-            </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="upload-button" id="uploadButton">Save Package</button>
+                </div>
+            </form>
         </div>
         <div class="back-button" id="backButton">
             <span>←</span>
@@ -169,37 +167,28 @@
     <script>
         // DOM elements
         const backButton = document.getElementById('backButton');
-        const uploadButton = document.getElementById('uploadButton');
         
-        // Load the sidebar
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize sidebar
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch("{{ url_for('static', filename='partials/sidebar.html') }}");
-                const html = await response.text();
-                document.getElementById('sidebar-container').innerHTML = html;
-                
-                // Initialize the sidebar with current page
-                initializeSidebar('confirm');
-                
-                // Back button
-                backButton.addEventListener('click', function() {
-                    // Go back to the scanning interface
-                    console.log('Going back to scanning page...');
-                    window.location.href = "{{ url_for('scan') }}";
-                });
-                
-                // Upload button
-                uploadButton.addEventListener('click', function() {
-                    console.log('Uploading package information...');
-                    // In production, this would send the form data to the backend
-                    alert('Package information uploaded successfully!');
-                    // Redirect to appropriate page after successful upload
-                    window.location.href = "{{ url_for('scan') }}"; // Go back to scan page after uploading
-                });
+                const response = fetch("{{ url_for('static', filename='partials/sidebar.html') }}")
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('sidebar-container').innerHTML = html;
+                        // Initialize the sidebar with current page
+                        initializeSidebar('confirm');
+                    });
             } catch (error) {
                 console.error('Error loading sidebar:', error);
             }
+            
+            // Back button
+            backButton.addEventListener('click', function() {
+                // Go back to the scanning interface
+                console.log('Going back to scanning page...');
+                window.location.href = "{{ url_for('scan') }}";
+            });
         });
     </script>
 </body>

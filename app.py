@@ -1,5 +1,5 @@
 print("app.py has been imported") #this is just to check if the file is being imported for debugging purposes
-from flask import Flask, flash, render_template, url_for, redirect
+from flask import Flask, flash, render_template, url_for, redirect, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, current_user, login_required
 from flask_wtf import FlaskForm
@@ -10,6 +10,9 @@ from flask_migrate import Migrate
 import email_validator
 import os
 from dotenv import load_dotenv
+import base64
+import json
+from datetime import datetime
 
 load_dotenv()
 
@@ -37,6 +40,17 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), nullable=False)
     password = db.Column(db.String(150), nullable=False)
+
+class Package(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_name = db.Column(db.String(200), nullable=False)
+    sender_name = db.Column(db.String(200), nullable=True)
+    recipient_address = db.Column(db.String(300), nullable=True)
+    extra_details = db.Column(db.Text, nullable=True)
+    image_path = db.Column(db.String(300), nullable=True)
+    date_received = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    is_picked_up = db.Column(db.Boolean, default=False)
+    picked_up_date = db.Column(db.DateTime, nullable=True)
 
 class SignupForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -93,12 +107,96 @@ def scan():
 @app.route('/orders')
 @login_required
 def orders():
-    return render_template('orders.html')
+    # Fetch all packages ordered by date (newest first)
+    packages = Package.query.order_by(Package.date_received.desc()).all()
+    return render_template('orders.html', packages=packages)
 
 @app.route('/confirm')
 @login_required
 def confirm():
-    return render_template('confirm.html')
+    # Get the image path from session if available
+    image_path = session.get('temp_image_path', None)
+    return render_template('confirm.html', image_path=image_path)
+
+@app.route('/save_package', methods=['POST'])
+@login_required
+def save_package():
+    try:
+        # Get form data
+        recipient_name = request.form.get('recipientName')
+        sender_name = request.form.get('senderName')
+        recipient_address = request.form.get('recipientAddress')
+        extra_details = request.form.get('extraDetails')
+        
+        # Get image path from session
+        image_path = session.get('temp_image_path')
+        
+        # Create new package record
+        new_package = Package(
+            recipient_name=recipient_name,
+            sender_name=sender_name,
+            recipient_address=recipient_address,
+            extra_details=extra_details,
+            image_path=image_path
+        )
+        
+        # Save to database
+        db.session.add(new_package)
+        db.session.commit()
+        
+        # Clear the session variable
+        session.pop('temp_image_path', None)
+        
+        flash('Package information saved successfully!', 'success')
+        return redirect(url_for('orders'))
+        
+    except Exception as e:
+        flash(f'Error saving package information: {str(e)}', 'danger')
+        return redirect(url_for('confirm'))
+
+@app.route('/process_image', methods=['POST'])
+@login_required
+def process_image():
+    try:
+        data = request.json
+        image_data = data.get('imageData')
+        
+        # Remove the data URL prefix
+        if image_data and ',' in image_data:
+            image_data = image_data.split(',')[1]
+        
+        # Create directories if they don't exist
+        upload_dir = os.path.join('static', 'uploads')
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+        
+        # Generate a unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"package_{current_user.id}_{timestamp}.jpg"
+        filepath = os.path.join(upload_dir, filename)
+        
+        # Save the image to filesystem
+        with open(filepath, "wb") as f:
+            f.write(base64.b64decode(image_data))
+        
+        # Store the image path in session for the confirmation step
+        session['temp_image_path'] = os.path.join('uploads', filename)
+        
+        # You could potentially use OCR here to extract information from the label
+        # For now, we'll just return success
+        
+        return jsonify({
+            'success': True,
+            'message': 'Image processed successfully',
+            'image_path': os.path.join('uploads', filename)
+        })
+    
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return jsonify({
+            'success': False,
+            'message': f"Error processing image: {str(e)}"
+        }), 500
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -114,7 +212,18 @@ def signup():
             flash('Account created successfully! You can now log in.', 'success')
             return redirect(url_for('index'))
     return render_template('signup.html', form=form)
- 
+
+@app.route('/mark_picked_up/<int:package_id>', methods=['POST'])
+@login_required
+def mark_picked_up(package_id):
+    try:
+        package = Package.query.get_or_404(package_id)
+        package.is_picked_up = True
+        package.picked_up_date = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():
