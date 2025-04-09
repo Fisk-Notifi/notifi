@@ -16,6 +16,7 @@ from datetime import datetime
 from datetime import datetime, timedelta
 from sqlalchemy import event
 from sqlalchemy.sql import func
+from helper import * 
 
 load_dotenv()
 
@@ -43,6 +44,17 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), nullable=False)
     password = db.Column(db.String(150), nullable=False)
+
+class Package(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_name = db.Column(db.String(200), nullable=False)
+    sender_name = db.Column(db.String(200), nullable=True)
+    recipient_address = db.Column(db.String(300), nullable=True)
+    extra_details = db.Column(db.Text, nullable=True)
+    image_path = db.Column(db.String(300), nullable=True)
+    date_received = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    is_picked_up = db.Column(db.Boolean, default=False)
+    picked_up_date = db.Column(db.DateTime, nullable=True)
 
 class SignupForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -108,7 +120,19 @@ def orders():
 def confirm():
     # Get the image path from session if available
     image_path = session.get('temp_image_path', None)
-    return render_template('confirm.html', image_path=image_path)
+    
+    # Initialize label as None
+    label = None
+    
+    # Only try to generate label details if an image path exists
+    if image_path:
+        try:
+            label = generate_label_details()
+        except Exception as e:
+            flash(f"Error processing package details: {str(e)}", "danger")
+            print(f"Error processing package details: {str(e)}")
+    
+    return render_template('confirm.html', image_path=image_path, label=label)
 
 @app.route('/save_package', methods=['POST'])
 @login_required
@@ -156,6 +180,11 @@ def process_image():
         # Remove the data URL prefix
         if image_data and ',' in image_data:
             image_data = image_data.split(',')[1]
+        else:
+            return jsonify({
+                'success': False,
+                'message': "Invalid image data format"
+            }), 400
         
         # Create directories if they don't exist
         upload_dir = os.path.join('static', 'uploads')
@@ -164,7 +193,7 @@ def process_image():
         
         # Generate a unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"package_{current_user.id}_{timestamp}.jpg"
+        filename = "package.jpg"
         filepath = os.path.join(upload_dir, filename)
         
         # Save the image to filesystem
@@ -173,9 +202,6 @@ def process_image():
         
         # Store the image path in session for the confirmation step
         session['temp_image_path'] = os.path.join('uploads', filename)
-        
-        # You could potentially use OCR here to extract information from the label
-        # For now, we'll just return success
         
         return jsonify({
             'success': True,
@@ -214,6 +240,7 @@ def mark_picked_up(package_id):
         package.picked_up_date = datetime.utcnow()
         db.session.commit()
         return jsonify({'success': True})
+        
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
