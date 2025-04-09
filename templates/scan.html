@@ -213,34 +213,36 @@
         // Camera stream variable
         let stream = null;
         
-        // Load the sidebar
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Initialize sidebar and event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize sidebar
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch("{{ url_for('static', filename='partials/sidebar.html') }}");
-                const html = await response.text();
-                document.getElementById('sidebar-container').innerHTML = html;
-                
-                // Initialize the sidebar with current page
-                initializeSidebar('scan');
-                
-                // Start scan button
-                startScanButton.addEventListener('click', function() {
-                    startScanning();
-                });
-                
-                // Capture button
-                captureScanButton.addEventListener('click', function() {
-                    captureLabel();
-                });
-                
-                // Back button
-                backButton.addEventListener('click', function() {
-                    stopScanning();
-                });
+                fetch("{{ url_for('static', filename='partials/sidebar.html') }}")
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('sidebar-container').innerHTML = html;
+                        // Initialize the sidebar with current page
+                        initializeSidebar('scan');
+                    });
             } catch (error) {
                 console.error('Error loading sidebar:', error);
             }
+            
+            // Start scan button
+            startScanButton.addEventListener('click', function() {
+                startScanning();
+            });
+            
+            // Capture button
+            captureScanButton.addEventListener('click', function() {
+                captureLabel();
+            });
+            
+            // Back button
+            backButton.addEventListener('click', function() {
+                stopScanning();
+            });
         });
         
         // Camera handling functions
@@ -316,11 +318,30 @@
             const imageData = canvas.toDataURL('image/jpeg');
             
             console.log('Label captured!');
-            // In production, this would send imageData to the backend
-            // for processing and then display results or next steps
             
-            // Simulate successful scan for demo
-            alert('Label scanned successfully! Package information would be displayed here.');
+            // Send image data to backend
+            fetch('/process_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imageData: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                if (data.success) {
+                    alert('Label scanned successfully! Redirecting to confirm page...');
+                    window.location.href = "{{ url_for('confirm') }}";
+                } else {
+                    alert('Error processing the image. Please try again.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error sending the image to the server. Please try again.');
+            });
+            
             stopScanning();
         }
         
