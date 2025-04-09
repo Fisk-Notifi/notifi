@@ -10,6 +10,9 @@ from flask_migrate import Migrate
 import email_validator
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+from sqlalchemy import event
+from sqlalchemy.sql import func
 
 load_dotenv()
 
@@ -37,6 +40,79 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), nullable=False)
     password = db.Column(db.String(150), nullable=False)
+
+class Order(db.Model):
+    order_id = db.Column(db.String(10), primary_key=True)
+    student_name = db.Column(db.String(150), nullable=False)
+    sender_info = db.Column(db.String(150), nullable=False)
+    student_email = db.Column(db.String(150), nullable=False)
+    late_pickup_date = db.Column(db.String(150), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=func.now())
+
+    def __init__(self, **kwargs):
+        super(Order, self).__init__(**kwargs)
+        if not self.order_id:
+            # Get the last order
+            last_order = Order.query.order_by(Order.order_id.desc()).first()
+            
+            if last_order:
+                # Extract the number from the last order_id and increment it
+                last_num = int(last_order.order_id.split('-')[1])
+                new_num = last_num + 1
+            else:
+                # If no orders exist, start with 1
+                new_num = 1
+            
+            # Format the new order_id with leading zeros
+            self.order_id = f"ORD-{new_num:03d}"
+            
+        # Set late_pickup_date to current date + 3 days
+        if not self.late_pickup_date:
+            self.late_pickup_date = (datetime.now() + timedelta(days=3)).strftime('%Y-%m-%d')
+
+@event.listens_for(Order, 'before_insert')
+def set_order_id(mapper, connection, target):
+    if not target.order_id:
+        # Get the last order
+        last_order = Order.query.order_by(Order.order_id.desc()).first()
+        
+        if last_order:
+            # Extract the number from the last order_id and increment it
+            last_num = int(last_order.order_id.split('-')[1])
+            new_num = last_num + 1
+        else:
+            # If no orders exist, start with 1
+            new_num = 1
+            
+        # Format the new order_id with leading zeros
+        target.order_id = f"ORD-{new_num:03d}"
+        
+    # Set late_pickup_date to current date + 3 days
+    if not target.late_pickup_date:
+        target.late_pickup_date = (datetime.now() + timedelta(days=3)).strftime('%Y-%m-%d')
+
+class Student(db.Model):
+    student_id = db.Column(db.String(10), primary_key=True)
+    full_name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), nullable=False, unique=True)
+
+class Package(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_name = db.Column(db.String(200))
+    sender_name = db.Column(db.String(200))
+    recipient_address = db.Column(db.String(300))
+    extra_details = db.Column(db.Text)
+    image_path = db.Column(db.String(300))
+    date_received = db.Column(db.DateTime)
+    is_picked_up = db.Column(db.Boolean)
+    picked_up_date = db.Column(db.DateTime)
+
+    def __init__(self, **kwargs):
+        super(Package, self).__init__(**kwargs)
+        if not self.date_received:
+            self.date_received = datetime.now()
+        if not self.is_picked_up:
+            self.is_picked_up = False
 
 class SignupForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
