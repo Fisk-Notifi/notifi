@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifi - Confirm Information</title>
-    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <style>
         * {
             margin: 0;
@@ -165,7 +165,7 @@
     </div>
 
     <!-- Include the sidebar JS -->
-    <script src="js/sidebar.js"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script>
         // DOM elements
         const backButton = document.getElementById('backButton');
@@ -175,7 +175,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch('partials/sidebar.html');
+                const response = await fetch("{{ url_for('static', filename='partials/sidebar.html') }}");
                 const html = await response.text();
                 document.getElementById('sidebar-container').innerHTML = html;
                 
@@ -186,7 +186,7 @@
                 backButton.addEventListener('click', function() {
                     // Go back to the scanning interface
                     console.log('Going back to scanning page...');
-                    window.location.href = 'scan.html';
+                    window.location.href = "{{ url_for('scan') }}";
                 });
                 
                 // Upload button
@@ -195,7 +195,7 @@
                     // In production, this would send the form data to the backend
                     alert('Package information uploaded successfully!');
                     // Redirect to appropriate page after successful upload
-                    window.location.href = 'scan.html'; // Go back to scan page after uploading
+                    window.location.href = "{{ url_for('scan') }}"; // Go back to scan page after uploading
                 });
             } catch (error) {
                 console.error('Error loading sidebar:', error);

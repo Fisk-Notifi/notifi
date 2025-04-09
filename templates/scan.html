@@ -175,9 +175,7 @@
 
 <body>
     <!-- Include the sidebar -->
-    <!-- <div id="sidebar-container"></div> -->
-
-    {% include 'partials/sidebar.html' %}
+    <div id="sidebar-container"></div>
     
     <div class="main-content">
         <h1 class="page-title">Scan Label</h1>
@@ -219,7 +217,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Fetch and insert the sidebar HTML
-                const response = await fetch("partials/sidebar.html");
+                const response = await fetch("{{ url_for('static', filename='partials/sidebar.html') }}");
                 const html = await response.text();
                 document.getElementById('sidebar-container').innerHTML = html;
                 
