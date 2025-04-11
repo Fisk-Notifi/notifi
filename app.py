@@ -229,34 +229,55 @@ def save_package():
         db.session.add(new_package)
         db.session.commit()
         
-        # Check if student exists in the database by name
+        # Try to match student in different ways
+        student = None
+        
+        # Method 1: Exact match by full name
         student = Student.query.filter_by(full_name=recipient_name).first()
+        
+        # Method 2: Case-insensitive match if method 1 failed
+        if not student:
+            student = Student.query.filter(
+                func.lower(Student.full_name) == func.lower(recipient_name)
+            ).first()
+        
+        # Method 3: Check if recipient name contains the student's name
+        if not student:
+            # Get all students
+            all_students = Student.query.all()
+            # Check if any student name is contained within the recipient name
+            for s in all_students:
+                if s.full_name.lower() in recipient_name.lower() or recipient_name.lower() in s.full_name.lower():
+                    student = s
+                    break
+        
         if student:
             # Send email notification to the student
             subject = "Package Notification from Fisk University Mailroom"
             message = f"""
-            Hello {student.full_name},
-            
-            You have a package waiting for you at the Fisk University Mailroom.
-            
-            Package Details:
-            - Sender: {sender_name}
-            - Date Received: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-            
-            Please bring your student ID to pick up your package.
-            
-            Best regards,
-            Fisk University Mailroom
-            """
+Hello {student.full_name},
+
+You have a package waiting for you at the Fisk University Mailroom.
+
+Package Details:
+- Sender: {sender_name}
+- Date Received: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+- You have 3 days to pick up your package
+
+Please bring your student ID to pick up your package.
+
+Best regards,
+Fisk University Mailroom
+"""
             
             # Send the email notification
             email_sent = send_email(student.email, subject, message)
             if email_sent:
-                flash(f'Package information saved and email notification sent to {student.email}!', 'success')
+                flash(f'Success! Package uploaded to orders and email notification sent to {student.email}', 'success')
             else:
-                flash(f'Package information saved but email notification failed to send.', 'warning')
+                flash(f'Package uploaded to orders but email notification failed to send to {student.email}. Please check email settings.', 'warning')
         else:
-            flash('Package information saved successfully!', 'success')
+            flash('Package uploaded to orders. No matching student found in the database, so no email notification was sent.', 'info')
         
         # Clear the session variables
         session.pop('temp_image_path', None)
@@ -333,13 +354,70 @@ def signup():
 @login_required
 def mark_picked_up(package_id):
     try:
+        # Get the package
         package = Package.query.get_or_404(package_id)
+        
+        # Set pickup status and time
         package.is_picked_up = True
         package.picked_up_date = datetime.utcnow()
         db.session.commit()
-        return jsonify({'success': True})
+        
+        # Try to find matching student for email notification
+        student = None
+        recipient_name = package.recipient_name
+        
+        # Method 1: Exact match by full name
+        student = Student.query.filter_by(full_name=recipient_name).first()
+        
+        # Method 2: Case-insensitive match if method 1 failed
+        if not student:
+            student = Student.query.filter(
+                func.lower(Student.full_name) == func.lower(recipient_name)
+            ).first()
+        
+        # Method 3: Check if recipient name contains the student's name
+        if not student:
+            # Get all students
+            all_students = Student.query.all()
+            # Check if any student name is contained within the recipient name
+            for s in all_students:
+                if s.full_name.lower() in recipient_name.lower() or recipient_name.lower() in s.full_name.lower():
+                    student = s
+                    break
+        
+        # Send email notification if student found
+        email_sent = False
+        if student:
+            # Create pickup confirmation email
+            subject = "Package Pickup Confirmation - Fisk University Mailroom"
+            message = f"""
+Hello {student.full_name},
+
+This email confirms that you have successfully picked up your package from the Fisk University Mailroom.
+
+Package Details:
+- Sender: {package.sender_name}
+- Date Received: {package.date_received.strftime('%Y-%m-%d %H:%M')}
+- Date Picked Up: {package.picked_up_date.strftime('%Y-%m-%d %H:%M')}
+
+Thank you for using the Fisk University Mailroom services.
+
+Best regards,
+Fisk University Mailroom
+"""
+            # Send the email notification
+            email_sent = send_email(student.email, subject, message)
+            print(f"Pickup confirmation email sent to {student.email}: {email_sent}")
+        
+        # Return success with email status
+        return jsonify({
+            'success': True,
+            'email_sent': email_sent,
+            'student_email': student.email if student else None
+        })
         
     except Exception as e:
+        print(f"Error marking package as picked up: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/update_package_details', methods=['POST'])
