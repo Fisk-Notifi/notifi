@@ -130,15 +130,24 @@
         <div class="confirm-container">
             <h2 class="section-title">Package Details</h2>
             
-            <form action="{{ url_for('save_package') }}" method="POST">
+            <div id="saveStatus" style="margin-bottom: 15px; display: none; color: green; font-size: 14px;">
+                <span>✓</span> Changes saved automatically
+            </div>
+            
+            <form action="{{ url_for('save_package') }}" method="POST" id="packageForm">
                 <div class="form-group">
                     <label for="recipientName">Recipient Name</label>
-                    <input type="text" id="recipientName" name="recipientName" value="{{ label.recipient_name if label else '' }}">
+                    <input type="text" id="recipientName" name="recipientName" value="{{ label.recipient_name if label else '' }}" onchange="updatePackageDetails()" oninput="updatePackageDetails()">
+                </div>
+
+                <div class="form-group">
+                    <label for="senderName">Sender Name</label>
+                    <input type="text" id="senderName" name="senderName" value="{{ label.sender_name if label else '' }}" onchange="updatePackageDetails()" oninput="updatePackageDetails()">
                 </div>
 
                 <div class="form-group">
                     <label for="recipientAddress">Recipient Address</label>
-                    <input type="text" id="recipientAddress" name="recipientAddress" value="{{ label.recipient_address if label else '' }}">
+                    <input type="text" id="recipientAddress" name="recipientAddress" value="{{ label.recipient_address if label else '' }}" onchange="updatePackageDetails()" oninput="updatePackageDetails()">
                 </div>
 
                 <div style="text-align: right;">
@@ -156,6 +165,58 @@
     <script>
         // DOM elements
         const backButton = document.getElementById('backButton');
+        
+        // Package details in-memory representation
+        let packageDetails = {
+            recipientName: "{{ label.recipient_name if label else '' }}",
+            senderName: "{{ label.sender_name if label else '' }}",
+            recipientAddress: "{{ label.recipient_address if label else '' }}"
+        };
+        
+        // Debounce function to limit API calls
+        let debounceTimeout;
+        function debounce(func, delay) {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(func, delay);
+        }
+        
+        // Function to update package details when form fields change
+        function updatePackageDetails() {
+            const form = document.getElementById('packageForm');
+            const saveStatus = document.getElementById('saveStatus');
+            
+            // Update our in-memory object
+            packageDetails.recipientName = form.recipientName.value;
+            packageDetails.senderName = form.senderName.value;
+            packageDetails.recipientAddress = form.recipientAddress.value;
+            
+            // Debounce the API call to prevent too many requests while typing
+            debounce(() => {
+                console.log('Package details updated:', packageDetails);
+                
+                // Send updated data to server
+                fetch("{{ url_for('update_package_details') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(packageDetails)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Server response:', data);
+                    // Show save status message
+                    saveStatus.style.display = 'block';
+                    // Hide the message after 3 seconds
+                    setTimeout(() => {
+                        saveStatus.style.display = 'none';
+                    }, 3000);
+                })
+                .catch((error) => {
+                    console.error('Error updating package details:', error);
+                });
+            }, 500); // Wait 500ms after typing stops before sending data
+        }
         
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize sidebar
@@ -178,6 +239,9 @@
                 console.log('Going back to scanning page...');
                 window.location.href = "{{ url_for('scan') }}";
             });
+            
+            // Initialize form with current values
+            updatePackageDetails();
         });
     </script>
 </body>
