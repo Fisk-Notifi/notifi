@@ -425,8 +425,14 @@
                                 // Update counters
                                 updateCounters();
                                 
-                                // Show success message
-                                alert('Package has been marked as picked up.');
+                                // Show success message with email notification status
+                                if (data.email_sent) {
+                                    alert(`Package has been marked as picked up. A confirmation email was sent to ${data.student_email}.`);
+                                } else if (data.student_email) {
+                                    alert(`Package has been marked as picked up, but the confirmation email failed to send to ${data.student_email}.`);
+                                } else {
+                                    alert('Package has been marked as picked up. No matching student was found for email notification.');
+                                }
                             } else {
                                 alert('Error: ' + data.error);
                             }

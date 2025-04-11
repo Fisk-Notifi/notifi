@@ -152,6 +152,9 @@
 
                 <div style="text-align: right;">
                     <button type="submit" class="upload-button" id="uploadButton">Upload</button>
+                    <p id="uploadingMessage" style="display: none; color: #4051D3; margin-top: 10px; font-style: italic;">
+                        Uploading package and notifying recipient...
+                    </p>
                 </div>
             </form>
         </div>
@@ -165,6 +168,20 @@
     <script>
         // DOM elements
         const backButton = document.getElementById('backButton');
+        const packageForm = document.getElementById('packageForm');
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadingMessage = document.getElementById('uploadingMessage');
+        
+        // Show loading state when form is submitted
+        if (packageForm) {
+            packageForm.addEventListener('submit', function() {
+                // Disable the upload button and show loading message
+                uploadButton.disabled = true;
+                uploadButton.style.opacity = '0.7';
+                uploadButton.textContent = 'Uploading...';
+                uploadingMessage.style.display = 'block';
+            });
+        }
         
         // Package details in-memory representation
         let packageDetails = {
