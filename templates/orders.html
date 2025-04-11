@@ -209,16 +209,16 @@
             <div class="filters">
                 <div class="filter-tabs">
                     <button class="filter-tab active">
-                        All <span class="filter-count">60</span>
+                        All <span class="filter-count">{{ total_count }}</span>
                     </button>
                     <button class="filter-tab">
-                        Current <span class="filter-count">12</span>
+                        Current <span class="filter-count">{{ current_count }}</span>
                     </button>
                     <button class="filter-tab">
-                        Picked Up <span class="filter-count">45</span>
+                        Picked Up <span class="filter-count">{{ picked_up_count }}</span>
                     </button>
                     <button class="filter-tab">
-                        Overdue <span class="filter-count">3</span>
+                        Overdue <span class="filter-count">{{ overdue_count }}</span>
                     </button>
                 </div>
                 <div class="search-box">
@@ -306,8 +306,41 @@
                     if (!this.classList.contains('active')) {
                         document.querySelector('.filter-tab.active').classList.remove('active');
                         this.classList.add('active');
-                        console.log('Filter changed to:', this.textContent.trim().split(' ')[0]);
-                        // This would typically filter the table based on the selected tab
+                        
+                        const filterType = this.textContent.trim().split(' ')[0].toLowerCase();
+                        console.log('Filter changed to:', filterType);
+                        
+                        // Filter the packages based on the selected tab
+                        const rows = document.querySelectorAll('.orders-table tbody tr');
+                        const currentDate = new Date();
+                        const sevenDaysAgo = new Date(currentDate);
+                        sevenDaysAgo.setDate(currentDate.getDate() - 7);
+                        
+                        rows.forEach(row => {
+                            const statusCell = row.querySelector('td:nth-child(5)');
+                            const status = statusCell ? statusCell.textContent.trim() : '';
+                            const dateCell = row.querySelector('td:nth-child(4)');
+                            const dateText = dateCell ? dateCell.textContent.trim() : '';
+                            const dateReceived = new Date(dateText);
+                            
+                            switch (filterType) {
+                                case 'all':
+                                    row.style.display = '';
+                                    break;
+                                case 'current':
+                                    row.style.display = status === 'In Mail Room' ? '' : 'none';
+                                    break;
+                                case 'picked':
+                                    row.style.display = status === 'Picked Up' ? '' : 'none';
+                                    break;
+                                case 'overdue':
+                                    // Show packages not picked up and older than 7 days
+                                    row.style.display = (status === 'In Mail Room' && dateReceived < sevenDaysAgo) ? '' : 'none';
+                                    break;
+                                default:
+                                    row.style.display = '';
+                            }
+                        });
                     }
                 });
             });

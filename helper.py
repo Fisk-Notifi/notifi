@@ -31,11 +31,21 @@ def generate_label_details():
         # Load a file from disk
         input_doc = mindee_client.source_from_path(file_path)
 
-        # Load a file from disk and enqueue it.
-        result = mindee_client.enqueue_and_parse(
-            product.us.UsMailV2,
-            input_doc,
-        )
+        try:
+            # Load a file from disk and enqueue it.
+            result = mindee_client.enqueue_and_parse(
+                product.us.UsMailV2,
+                input_doc,
+            )
+        except Exception as api_error:
+            error_message = str(api_error)
+            if "403" in error_message and "maximum number of requests" in error_message:
+                print("Error: Mindee API rate limit exceeded. Please upgrade your plan or try again later.")
+            elif "401" in error_message:
+                print("Error: Invalid Mindee API key. Please check your API key.")
+            else:
+                print(f"Mindee API error: {error_message}")
+            return None
         
         # Debug: inspect what's available in the result
         print(f"Result type: {type(result)}")
@@ -44,7 +54,8 @@ def generate_label_details():
         # Create a Label object with default empty values
         label = Label(
             recipient_name="",
-            recipient_address=""
+            recipient_address="",
+            sender_name=""
         )
         
         # Try to safely extract data from result
@@ -68,6 +79,10 @@ def generate_label_details():
                         label.recipient_address = pred.recipient_addresses[0].complete
                     elif hasattr(pred, 'sender_address') and pred.sender_address:
                         label.recipient_address = pred.sender_address.complete  # Use sender address as fallback
+                        
+                    # Extract sender name
+                    if hasattr(pred, 'sender_name') and pred.sender_name:
+                        label.sender_name = pred.sender_name.value
         except Exception as extract_error:
             print(f"Error extracting data from response: {str(extract_error)}")
         

@@ -17,6 +17,9 @@ from datetime import datetime, timedelta
 from sqlalchemy import event
 from sqlalchemy.sql import func
 from helper import * 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 load_dotenv()
 
@@ -55,6 +58,11 @@ class Package(db.Model):
     date_received = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     is_picked_up = db.Column(db.Boolean, default=False)
     picked_up_date = db.Column(db.DateTime, nullable=True)
+
+class Student(db.Model):
+    student_id = db.Column(db.String(10), primary_key=True)
+    full_name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), nullable=False)
 
 class SignupForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -113,7 +121,22 @@ def scan():
 def orders():
     # Fetch all packages ordered by date (newest first)
     packages = Package.query.order_by(Package.date_received.desc()).all()
-    return render_template('orders.html', packages=packages)
+    
+    # Calculate counts for each category
+    total_count = len(packages)
+    current_count = sum(1 for package in packages if not package.is_picked_up)
+    picked_up_count = sum(1 for package in packages if package.is_picked_up)
+    
+    # Calculate overdue packages (packages not picked up and older than 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    overdue_count = sum(1 for package in packages if not package.is_picked_up and package.date_received < seven_days_ago)
+    
+    return render_template('orders.html', 
+                          packages=packages, 
+                          total_count=total_count,
+                          current_count=current_count,
+                          picked_up_count=picked_up_count,
+                          overdue_count=overdue_count)
 
 @app.route('/confirm')
 @login_required
@@ -124,15 +147,57 @@ def confirm():
     # Initialize label as None
     label = None
     
-    # Only try to generate label details if an image path exists
-    if image_path:
+    # Check if we have temp package details from previous edits
+    temp_details = session.get('temp_package_details', None)
+    
+    # Only try to generate label details if an image path exists and we don't have temp details
+    if image_path and not temp_details:
         try:
             label = generate_label_details()
+            print("Generated new label details from Mindee API")
         except Exception as e:
             flash(f"Error processing package details: {str(e)}", "danger")
             print(f"Error processing package details: {str(e)}")
+    elif temp_details:
+        # Use temp details to reconstruct the label
+        label = Label(
+            recipient_name=temp_details.get('recipient_name', ''),
+            recipient_address=temp_details.get('recipient_address', ''),
+            sender_name=temp_details.get('sender_name', '')
+        )
+        print(f"Using saved form values: Recipient={temp_details.get('recipient_name')}, Sender={temp_details.get('sender_name')}")
     
     return render_template('confirm.html', image_path=image_path, label=label)
+
+def send_email(to_email, subject, message):
+    try:
+        # Get email credentials from environment variables
+        email_username = os.environ.get('EMAIL_USERNAME')
+        email_password = os.environ.get('EMAIL_PASSWORD')
+        
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = email_username
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        
+        # Add message body
+        msg.attach(MIMEText(message, 'plain'))
+        
+        # Connect to Gmail SMTP server
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        
+        # Login and send email
+        server.login(email_username, email_password)
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"Email sent successfully to {to_email}")
+        return True
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        return False
 
 @app.route('/save_package', methods=['POST'])
 @login_required
@@ -140,6 +205,7 @@ def save_package():
     try:
         # Get form data
         recipient_name = request.form.get('recipientName')
+        sender_name = request.form.get('senderName')
         recipient_address = request.form.get('recipientAddress')
         extra_details = request.form.get('extraDetails')
         
@@ -149,6 +215,7 @@ def save_package():
         # Create new package record
         new_package = Package(
             recipient_name=recipient_name,
+            sender_name=sender_name,
             recipient_address=recipient_address,
             extra_details=extra_details,
             image_path=image_path
@@ -158,10 +225,39 @@ def save_package():
         db.session.add(new_package)
         db.session.commit()
         
-        # Clear the session variable
-        session.pop('temp_image_path', None)
+        # Check if student exists in the database by name
+        student = Student.query.filter_by(full_name=recipient_name).first()
+        if student:
+            # Send email notification to the student
+            subject = "Package Notification from Fisk University Mailroom"
+            message = f"""
+            Hello {student.full_name},
+            
+            You have a package waiting for you at the Fisk University Mailroom.
+            
+            Package Details:
+            - Sender: {sender_name}
+            - Date Received: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+            
+            Please bring your student ID to pick up your package.
+            
+            Best regards,
+            Fisk University Mailroom
+            """
+            
+            # Send the email notification
+            email_sent = send_email(student.email, subject, message)
+            if email_sent:
+                flash(f'Package information saved and email notification sent to {student.email}!', 'success')
+            else:
+                flash(f'Package information saved but email notification failed to send.', 'warning')
+        else:
+            flash('Package information saved successfully!', 'success')
         
-        flash('Package information saved successfully!', 'success')
+        # Clear the session variables
+        session.pop('temp_image_path', None)
+        session.pop('temp_package_details', None)
+        
         return redirect(url_for('orders'))
         
     except Exception as e:
@@ -241,6 +337,35 @@ def mark_picked_up(package_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/update_package_details', methods=['POST'])
+@login_required
+def update_package_details():
+    try:
+        # Get updated package details from the request
+        data = request.json
+        
+        # Store in session for persistence between page navigations
+        session['temp_package_details'] = {
+            'recipient_name': data.get('recipientName', ''),
+            'sender_name': data.get('senderName', ''),
+            'recipient_address': data.get('recipientAddress', '')
+        }
+        
+        # Print statement to show update is working
+        print(f"Package details updated: Recipient={data.get('recipientName')}, Sender={data.get('senderName')}, Address={data.get('recipientAddress')}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Package details updated successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error updating package details: {e}")
+        return jsonify({
+            'success': False,
+            'message': f"Error updating package details: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     with app.app_context():
