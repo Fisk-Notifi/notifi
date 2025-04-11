@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Notifi - Confirm Information</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <style>
@@ -134,20 +137,48 @@
                 <span>✓</span> Changes saved automatically
             </div>
             
+            {% if is_ocr_data %}
+            <div id="ocrStatus" style="margin-bottom: 15px; color: #4051D3; font-size: 14px;">
+                <span>🔍</span> Data extracted from scanned label using OCR
+            </div>
+            {% endif %}
+            
+            <div style="position: absolute; top: 25px; right: 25px; z-index: 100;">
+                <button id="clearCacheBtn" 
+                        style="background-color: #f2f2f2; border: 1px solid #ddd; border-radius: 4px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; font-size: 13px;">
+                    <span style="margin-right: 5px;">⟳</span> Refresh Page
+                </button>
+            </div>
+            
             <form action="{{ url_for('save_package') }}" method="POST" id="packageForm">
                 <div class="form-group">
                     <label for="recipientName">Recipient Name</label>
-                    <input type="text" id="recipientName" name="recipientName" value="{{ label.recipient_name if label else '' }}" onchange="updatePackageDetails()" oninput="updatePackageDetails()">
+                    <input type="text" id="recipientName" name="recipientName" 
+                           value="{{ label.recipient_name if label else '' }}" 
+                           {% if is_ocr_data and label.recipient_name %}
+                           class="ocr-data"
+                           {% endif %}
+                           onchange="updatePackageDetails()" oninput="updatePackageDetails()">
                 </div>
 
                 <div class="form-group">
                     <label for="senderName">Sender Name</label>
-                    <input type="text" id="senderName" name="senderName" value="{{ label.sender_name if label else '' }}" onchange="updatePackageDetails()" oninput="updatePackageDetails()">
+                    <input type="text" id="senderName" name="senderName" 
+                           value="{{ label.sender_name if label else '' }}" 
+                           {% if is_ocr_data and label.sender_name %}
+                           class="ocr-data"
+                           {% endif %}
+                           onchange="updatePackageDetails()" oninput="updatePackageDetails()">
                 </div>
 
                 <div class="form-group">
                     <label for="recipientAddress">Recipient Address</label>
-                    <input type="text" id="recipientAddress" name="recipientAddress" value="{{ label.recipient_address if label else '' }}" onchange="updatePackageDetails()" oninput="updatePackageDetails()">
+                    <input type="text" id="recipientAddress" name="recipientAddress" 
+                           value="{{ label.recipient_address if label else '' }}" 
+                           {% if is_ocr_data and label.recipient_address %}
+                           class="ocr-data"
+                           {% endif %}
+                           onchange="updatePackageDetails()" oninput="updatePackageDetails()">
                 </div>
 
                 <div style="text-align: right;">
@@ -202,26 +233,39 @@
             const form = document.getElementById('packageForm');
             const saveStatus = document.getElementById('saveStatus');
             
-            // Update our in-memory object
-            packageDetails.recipientName = form.recipientName.value;
-            packageDetails.senderName = form.senderName.value;
-            packageDetails.recipientAddress = form.recipientAddress.value;
+            // Get current form values
+            const recipientNameValue = form.recipientName.value;
+            const senderNameValue = form.senderName.value;
+            const recipientAddressValue = form.recipientAddress.value;
+            
+            // Create updated package details object
+            const updatedDetails = {
+                recipientName: recipientNameValue,
+                senderName: senderNameValue,
+                recipientAddress: recipientAddressValue
+            };
+            
+            // Log what we're sending
+            console.log('Sending to server:', updatedDetails);
             
             // Debounce the API call to prevent too many requests while typing
-            debounce(() => {
-                console.log('Package details updated:', packageDetails);
-                
+            debounce(() => {               
                 // Send updated data to server
                 fetch("{{ url_for('update_package_details') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(packageDetails)
+                    body: JSON.stringify(updatedDetails),
+                    cache: 'no-store'
                 })
                 .then(response => response.json())
                 .then(data => {
                     console.log('Server response:', data);
+                    
+                    // Update package details object with the response
+                    packageDetails = updatedDetails;
+                    
                     // Show save status message
                     saveStatus.style.display = 'block';
                     // Hide the message after 3 seconds
@@ -236,6 +280,13 @@
         }
         
         document.addEventListener('DOMContentLoaded', () => {
+            // Log information about the data source
+            console.log('Page initialized with data:');
+            console.log('- Is OCR data: {{ is_ocr_data|tojson }}');
+            console.log('- Recipient name: "{{ label.recipient_name if label else "" }}"');
+            console.log('- Sender name: "{{ label.sender_name if label else "" }}"');
+            console.log('- Recipient address: "{{ label.recipient_address if label else "" }}"');
+            
             // Initialize sidebar
             try {
                 // Fetch and insert the sidebar HTML
@@ -256,6 +307,27 @@
                 console.log('Going back to scanning page...');
                 window.location.href = "{{ url_for('scan') }}";
             });
+            
+            // Clear cache button
+            const clearCacheBtn = document.getElementById('clearCacheBtn');
+            if (clearCacheBtn) {
+                clearCacheBtn.addEventListener('click', function() {
+                    // Navigate to confirm route with clear_cache parameter
+                    window.location.href = "{{ url_for('confirm', clear_cache='yes') }}";
+                });
+            }
+            
+            // Hide OCR status after 5 seconds
+            const ocrStatus = document.getElementById('ocrStatus');
+            if (ocrStatus) {
+                setTimeout(() => {
+                    ocrStatus.style.opacity = '0';
+                    ocrStatus.style.transition = 'opacity 1s';
+                    setTimeout(() => {
+                        ocrStatus.style.display = 'none';
+                    }, 1000);
+                }, 5000);
+            }
             
             // Initialize form with current values
             updatePackageDetails();

@@ -143,8 +143,14 @@ def orders():
                           overdue_count=overdue_count)
 
 @app.route('/confirm')
+@app.route('/confirm/<clear_cache>')
 @login_required
-def confirm():
+def confirm(clear_cache=None):
+    # Clear session data if requested
+    if clear_cache:
+        session.pop('temp_package_details', None)
+        print("Session cache cleared for confirm page")
+    
     # Get the image path from session if available
     image_path = session.get('temp_image_path', None)
     
@@ -154,14 +160,43 @@ def confirm():
     # Check if we have temp package details from previous edits
     temp_details = session.get('temp_package_details', None)
     
-    # Only try to generate label details if an image path exists and we don't have temp details
+    # Flag to indicate if data is from OCR
+    is_ocr_data = False
+    
+    # Print session info for debugging
+    print("SESSION IN CONFIRM ROUTE:", dict(session))
+    print("Image path:", image_path)
+    print("Temp details:", temp_details)
+    
+    # If we have an image path but no temp details, use OCR to generate label details
     if image_path and not temp_details:
         try:
+            print("Attempting to generate label details from OCR...")
             label = generate_label_details()
-            print("Generated new label details from Mindee API")
+            
+            if label:
+                print("OCR result successful:")
+                print(f"- Recipient: {label.recipient_name}")
+                print(f"- Sender: {label.sender_name}")
+                print(f"- Address: {label.recipient_address}")
+                is_ocr_data = True
+            else:
+                print("OCR returned None - no data extracted")
+                # Create an empty label to avoid errors
+                label = Label(
+                    recipient_name="",
+                    recipient_address="",
+                    sender_name=""
+                )
         except Exception as e:
             flash(f"Error processing package details: {str(e)}", "danger")
             print(f"Error processing package details: {str(e)}")
+            # Create an empty label to avoid errors
+            label = Label(
+                recipient_name="",
+                recipient_address="",
+                sender_name=""
+            )
     elif temp_details:
         # Use temp details to reconstruct the label
         label = Label(
@@ -170,8 +205,15 @@ def confirm():
             sender_name=temp_details.get('sender_name', '')
         )
         print(f"Using saved form values: Recipient={temp_details.get('recipient_name')}, Sender={temp_details.get('sender_name')}")
+    else:
+        # No image and no temp details, create an empty label
+        label = Label(
+            recipient_name="",
+            recipient_address="",
+            sender_name=""
+        )
     
-    return render_template('confirm.html', image_path=image_path, label=label)
+    return render_template('confirm.html', image_path=image_path, label=label, is_ocr_data=is_ocr_data)
 
 def send_email(to_email, subject, message):
     try:
@@ -322,6 +364,10 @@ def process_image():
         # Store the image path in session for the confirmation step
         session['temp_image_path'] = os.path.join('uploads', filename)
         
+        # Clear any existing package details to ensure we use the OCR results
+        session.pop('temp_package_details', None)
+        session.modified = True
+        
         return jsonify({
             'success': True,
             'message': 'Image processed successfully',
@@ -354,70 +400,13 @@ def signup():
 @login_required
 def mark_picked_up(package_id):
     try:
-        # Get the package
         package = Package.query.get_or_404(package_id)
-        
-        # Set pickup status and time
         package.is_picked_up = True
         package.picked_up_date = datetime.utcnow()
         db.session.commit()
-        
-        # Try to find matching student for email notification
-        student = None
-        recipient_name = package.recipient_name
-        
-        # Method 1: Exact match by full name
-        student = Student.query.filter_by(full_name=recipient_name).first()
-        
-        # Method 2: Case-insensitive match if method 1 failed
-        if not student:
-            student = Student.query.filter(
-                func.lower(Student.full_name) == func.lower(recipient_name)
-            ).first()
-        
-        # Method 3: Check if recipient name contains the student's name
-        if not student:
-            # Get all students
-            all_students = Student.query.all()
-            # Check if any student name is contained within the recipient name
-            for s in all_students:
-                if s.full_name.lower() in recipient_name.lower() or recipient_name.lower() in s.full_name.lower():
-                    student = s
-                    break
-        
-        # Send email notification if student found
-        email_sent = False
-        if student:
-            # Create pickup confirmation email
-            subject = "Package Pickup Confirmation - Fisk University Mailroom"
-            message = f"""
-Hello {student.full_name},
-
-This email confirms that you have successfully picked up your package from the Fisk University Mailroom.
-
-Package Details:
-- Sender: {package.sender_name}
-- Date Received: {package.date_received.strftime('%Y-%m-%d %H:%M')}
-- Date Picked Up: {package.picked_up_date.strftime('%Y-%m-%d %H:%M')}
-
-Thank you for using the Fisk University Mailroom services.
-
-Best regards,
-Fisk University Mailroom
-"""
-            # Send the email notification
-            email_sent = send_email(student.email, subject, message)
-            print(f"Pickup confirmation email sent to {student.email}: {email_sent}")
-        
-        # Return success with email status
-        return jsonify({
-            'success': True,
-            'email_sent': email_sent,
-            'student_email': student.email if student else None
-        })
+        return jsonify({'success': True})
         
     except Exception as e:
-        print(f"Error marking package as picked up: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/update_package_details', methods=['POST'])
@@ -426,24 +415,45 @@ def update_package_details():
     try:
         # Get updated package details from the request
         data = request.json
+        if not data:
+            print("ERROR: No JSON data received in update_package_details")
+            return jsonify({
+                'success': False,
+                'message': 'No data received'
+            }), 400
         
-        # Store in session for persistence between page navigations
-        session['temp_package_details'] = {
+        # Log the received data
+        print("=== RECEIVED PACKAGE DETAILS UPDATE ===")
+        print(f"Recipient Name: {data.get('recipientName', '')}")
+        print(f"Sender Name: {data.get('senderName', '')}")
+        print(f"Recipient Address: {data.get('recipientAddress', '')}")
+        
+        # Create package details dict for session storage
+        package_details = {
             'recipient_name': data.get('recipientName', ''),
             'sender_name': data.get('senderName', ''),
             'recipient_address': data.get('recipientAddress', '')
         }
         
-        # Print statement to show update is working
-        print(f"Package details updated: Recipient={data.get('recipientName')}, Sender={data.get('senderName')}, Address={data.get('recipientAddress')}")
+        # Store in session for persistence between page navigations
+        session['temp_package_details'] = package_details
         
+        # Force session save
+        session.modified = True
+        
+        # Print statement to show update is working
+        print("=== SESSION UPDATED ===")
+        print(f"Session now contains temp_package_details: {session.get('temp_package_details')}")
+        
+        # Return success response with the saved details
         return jsonify({
             'success': True,
-            'message': 'Package details updated successfully'
+            'message': 'Package details updated successfully',
+            'packageDetails': package_details
         })
         
     except Exception as e:
-        print(f"Error updating package details: {e}")
+        print(f"ERROR in update_package_details: {str(e)}")
         return jsonify({
             'success': False,
             'message': f"Error updating package details: {str(e)}"

@@ -28,15 +28,19 @@ def generate_label_details():
             print("Error: package.jpg not found")
             return None
             
+        print(f"Starting OCR processing for image: {file_path}")
+            
         # Load a file from disk
         input_doc = mindee_client.source_from_path(file_path)
 
         try:
             # Load a file from disk and enqueue it.
+            print("Sending request to Mindee API...")
             result = mindee_client.enqueue_and_parse(
                 product.us.UsMailV2,
                 input_doc,
             )
+            print("Received response from Mindee API")
         except Exception as api_error:
             error_message = str(api_error)
             if "403" in error_message and "maximum number of requests" in error_message:
@@ -46,10 +50,6 @@ def generate_label_details():
             else:
                 print(f"Mindee API error: {error_message}")
             return None
-        
-        # Debug: inspect what's available in the result
-        print(f"Result type: {type(result)}")
-        print(f"Result attributes: {dir(result)}")
         
         # Create a Label object with default empty values
         label = Label(
@@ -62,31 +62,57 @@ def generate_label_details():
         try:
             if hasattr(result, 'document'):
                 doc = result.document
-                print(f"Document type: {type(doc)}")
-                print(f"Document attributes: {dir(doc)}")
+                print("Successfully extracted document from result")
                 
                 if hasattr(doc, 'inference') and hasattr(doc.inference, 'prediction'):
                     pred = doc.inference.prediction
+                    print("Found prediction in document inference")
                     
-                    # Extract recipient name - check for sender name if recipient name isn't available
+                    # Extract recipient name
                     if hasattr(pred, 'recipient_names') and pred.recipient_names:
                         label.recipient_name = pred.recipient_names[0].value
-                    elif hasattr(pred, 'sender_name') and pred.sender_name:
-                        label.recipient_name = pred.sender_name.value  # Use sender name as fallback
-                    
-                    # Extract recipient address - check for sender address if recipient address isn't available
+                        print(f"Found recipient name: {label.recipient_name}")
+                    else:
+                        print("No recipient name found in OCR result")
+                        
+                    # Extract recipient address
                     if hasattr(pred, 'recipient_addresses') and pred.recipient_addresses:
                         label.recipient_address = pred.recipient_addresses[0].complete
-                    elif hasattr(pred, 'sender_address') and pred.sender_address:
-                        label.recipient_address = pred.sender_address.complete  # Use sender address as fallback
+                        print(f"Found recipient address: {label.recipient_address}")
+                    else:
+                        print("No recipient address found in OCR result")
                         
                     # Extract sender name
                     if hasattr(pred, 'sender_name') and pred.sender_name:
                         label.sender_name = pred.sender_name.value
+                        print(f"Found sender name: {label.sender_name}")
+                    else:
+                        print("No sender name found in OCR result")
+                        
+                    # Fallbacks
+                    # If recipient name is empty but sender name is not, use sender name
+                    if not label.recipient_name and label.sender_name:
+                        print(f"Using sender name as fallback for recipient: {label.sender_name}")
+                        label.recipient_name = label.sender_name
+                        
+                    # If recipient address is empty but sender address exists
+                    if not label.recipient_address and hasattr(pred, 'sender_address') and pred.sender_address:
+                        print(f"Using sender address as fallback for recipient address")
+                        label.recipient_address = pred.sender_address.complete
+                else:
+                    print("No inference or prediction found in document")
+            else:
+                print("No document found in result")
+                
+            # Final check: return None if all fields are empty
+            if not label.recipient_name and not label.sender_name and not label.recipient_address:
+                print("All fields are empty, returning None")
+                return None
+                
+            return label
         except Exception as extract_error:
             print(f"Error extracting data from response: {str(extract_error)}")
-        
-        return label
+            return None
     except Exception as e:
         print(f"Error in generate_label_details: {str(e)}")
         return None
