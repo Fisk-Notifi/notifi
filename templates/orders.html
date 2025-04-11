@@ -209,21 +209,24 @@
             <div class="filters">
                 <div class="filter-tabs">
                     <button class="filter-tab active">
-                        All <span class="filter-count">60</span>
+                        All <span class="filter-count">{{ total_count }}</span>
                     </button>
                     <button class="filter-tab">
-                        Current <span class="filter-count">12</span>
+                        Current <span class="filter-count">{{ current_count }}</span>
                     </button>
                     <button class="filter-tab">
-                        Picked Up <span class="filter-count">45</span>
+                        Picked Up <span class="filter-count">{{ picked_up_count }}</span>
                     </button>
                     <button class="filter-tab">
-                        Overdue <span class="filter-count">3</span>
+                        Overdue <span class="filter-count">{{ overdue_count }}</span>
                     </button>
                 </div>
                 <div class="search-box">
                     <img src="{{ url_for('static', filename='images/icons/search.png') }}" alt="Search" width="16" height="16">
                     <input type="text" placeholder="Search by ID, name, or tracking number...">
+                    <button type="button" id="clearSearch" style="background: none; border: none; cursor: pointer; display: none;">
+                        <span style="font-size: 16px; color: #888;">×</span>
+                    </button>
                 </div>
             </div>
             
@@ -233,7 +236,7 @@
                         <th>Order ID</th>
                         <th>Recipient Name</th>
                         <th>Sender Info</th>
-                        <th>Date Received</th>
+                        <th id="dateColumnHeader">Date Received</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -245,7 +248,11 @@
                             <td>#ORD-{{ package.id }}</td>
                             <td>{{ package.recipient_name }}</td>
                             <td>{{ package.sender_name }}</td>
-                            <td>{{ package.date_received.strftime('%b %d, %Y') }}</td>
+                            <td class="date-cell" 
+                                data-received="{{ package.date_received.strftime('%b %d, %Y') }}"
+                                data-latest="{{ package.latest_pickup_date.strftime('%b %d, %Y') }}">
+                                {{ package.date_received.strftime('%b %d, %Y') }}
+                            </td>
                             <td>
                                 {% if package.is_picked_up %}
                                 <span class="status status-delivered">Picked Up</span>
@@ -306,8 +313,71 @@
                     if (!this.classList.contains('active')) {
                         document.querySelector('.filter-tab.active').classList.remove('active');
                         this.classList.add('active');
-                        console.log('Filter changed to:', this.textContent.trim().split(' ')[0]);
-                        // This would typically filter the table based on the selected tab
+                        
+                        const filterType = this.textContent.trim().split(' ')[0].toLowerCase();
+                        console.log('Filter changed to:', filterType);
+                        
+                        // Update date column header based on filter type
+                        const dateColumnHeader = document.getElementById('dateColumnHeader');
+                        if (filterType === 'current') {
+                            dateColumnHeader.textContent = 'Latest Pickup Date';
+                        } else {
+                            dateColumnHeader.textContent = 'Date Received';
+                        }
+                        
+                        // Get any active search term
+                        const searchInput = document.querySelector('.search-box input');
+                        const searchText = searchInput ? searchInput.value.toLowerCase() : '';
+                        
+                        // Filter the packages based on the selected tab
+                        const rows = document.querySelectorAll('.orders-table tbody tr');
+                        const currentDate = new Date();
+                        const sevenDaysAgo = new Date(currentDate);
+                        sevenDaysAgo.setDate(currentDate.getDate() - 7);
+                        
+                        rows.forEach(row => {
+                            const statusCell = row.querySelector('td:nth-child(5)');
+                            const status = statusCell ? statusCell.textContent.trim() : '';
+                            const dateCell = row.querySelector('td:nth-child(4)');
+                            const dateText = dateCell ? dateCell.getAttribute('data-received') : '';
+                            const dateReceived = new Date(dateText);
+                            
+                            // Update date cell display based on filter type
+                            if (dateCell) {
+                                if (filterType === 'current') {
+                                    dateCell.textContent = dateCell.getAttribute('data-latest');
+                                } else {
+                                    dateCell.textContent = dateCell.getAttribute('data-received');
+                                }
+                            }
+                            
+                            // Check if the row matches search text (if search is active)
+                            const rowText = row.textContent.toLowerCase();
+                            const matchesSearch = searchText === '' || rowText.includes(searchText);
+                            
+                            // Determine if row should be visible based on tab filter
+                            let matchesTabFilter = false;
+                            switch (filterType) {
+                                case 'all':
+                                    matchesTabFilter = true;
+                                    break;
+                                case 'current':
+                                    matchesTabFilter = status === 'In Mail Room';
+                                    break;
+                                case 'picked':
+                                    matchesTabFilter = status === 'Picked Up';
+                                    break;
+                                case 'overdue':
+                                    // Show packages not picked up and older than 7 days
+                                    matchesTabFilter = (status === 'In Mail Room' && dateReceived < sevenDaysAgo);
+                                    break;
+                                default:
+                                    matchesTabFilter = true;
+                            }
+                            
+                            // Show row only if it matches both the search and tab filter
+                            row.style.display = (matchesSearch && matchesTabFilter) ? '' : 'none';
+                        });
                     }
                 });
             });
@@ -316,6 +386,7 @@
             document.querySelectorAll('.action-button').forEach(button => {
                 button.addEventListener('click', function() {
                     const packageId = this.getAttribute('data-package-id');
+                    const row = this.closest('tr');
                     
                     if (confirm('Are you sure you want to mark this package as picked up?')) {
                         // Send request to mark as picked up
@@ -328,9 +399,40 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                alert('Package has been marked as picked up.');
-                                // Reload the page to show updated status
-                                window.location.reload();
+                                // Get current active tab
+                                const activeTab = document.querySelector('.filter-tab.active');
+                                const currentFilter = activeTab.textContent.trim().split(' ')[0].toLowerCase();
+                                
+                                // Update the row to show picked up status
+                                const statusCell = row.querySelector('td:nth-child(5)');
+                                const actionCell = row.querySelector('td:nth-child(6)');
+                                
+                                // Update status cell
+                                statusCell.innerHTML = '<span class="status status-delivered">Picked Up</span>';
+                                
+                                // Get current date for display
+                                const now = new Date();
+                                const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                
+                                // Update action cell
+                                actionCell.innerHTML = `<em>Picked up on ${dateStr}</em>`;
+                                
+                                // If on current or overdue tab, hide the row since it's now picked up
+                                if (currentFilter === 'current' || currentFilter === 'overdue') {
+                                    row.style.display = 'none';
+                                }
+                                
+                                // Update counters
+                                updateCounters();
+                                
+                                // Show success message with email notification status
+                                if (data.email_sent) {
+                                    alert(`Package has been marked as picked up. A confirmation email was sent to ${data.student_email}.`);
+                                } else if (data.student_email) {
+                                    alert(`Package has been marked as picked up, but the confirmation email failed to send to ${data.student_email}.`);
+                                } else {
+                                    alert('Package has been marked as picked up. No matching student was found for email notification.');
+                                }
                             } else {
                                 alert('Error: ' + data.error);
                             }
@@ -343,22 +445,120 @@
                 });
             });
             
+            // Function to update the counter badges
+            function updateCounters() {
+                fetch('/get_package_counts')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update the counter spans
+                        document.querySelectorAll('.filter-tab').forEach(tab => {
+                            const filterType = tab.textContent.trim().split(' ')[0].toLowerCase();
+                            const countSpan = tab.querySelector('.filter-count');
+                            
+                            switch (filterType) {
+                                case 'all':
+                                    countSpan.textContent = data.total_count;
+                                    break;
+                                case 'current':
+                                    countSpan.textContent = data.current_count;
+                                    break;
+                                case 'picked':
+                                    countSpan.textContent = data.picked_up_count;
+                                    break;
+                                case 'overdue':
+                                    countSpan.textContent = data.overdue_count;
+                                    break;
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error updating counters:', error);
+                    });
+            }
+            
             // Search functionality
             const searchInput = document.querySelector('.search-box input');
+            const clearSearchBtn = document.getElementById('clearSearch');
+            
             if (searchInput) {
+                // Show/hide clear button based on search input content
                 searchInput.addEventListener('input', function() {
                     const searchText = this.value.toLowerCase();
+                    
+                    // Show/hide clear button
+                    if (searchText.length > 0) {
+                        clearSearchBtn.style.display = 'inline-block';
+                    } else {
+                        clearSearchBtn.style.display = 'none';
+                    }
+                    
                     const rows = document.querySelectorAll('.orders-table tbody tr');
+                    const activeTab = document.querySelector('.filter-tab.active');
+                    const currentFilter = activeTab.textContent.trim().split(' ')[0].toLowerCase();
+                    
+                    // Get current date for overdue filtering
+                    const currentDate = new Date();
+                    const sevenDaysAgo = new Date(currentDate);
+                    sevenDaysAgo.setDate(currentDate.getDate() - 7);
                     
                     rows.forEach(row => {
-                        const text = row.textContent.toLowerCase();
-                        if (text.includes(searchText)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
+                        // Check if row content matches search text
+                        const rowText = row.textContent.toLowerCase();
+                        const matchesSearch = rowText.includes(searchText);
+                        
+                        // Get status for tab filtering
+                        const statusCell = row.querySelector('td:nth-child(5)');
+                        const status = statusCell ? statusCell.textContent.trim() : '';
+                        
+                        // Get date for overdue filtering
+                        const dateCell = row.querySelector('td:nth-child(4)');
+                        const dateText = dateCell ? dateCell.getAttribute('data-received') : '';
+                        const dateReceived = new Date(dateText);
+                        
+                        // Apply combined filtering (search text + current tab)
+                        let shouldShow = matchesSearch; // First, it must match search
+                        
+                        // Then, it must match the active tab filter
+                        switch (currentFilter) {
+                            case 'all':
+                                // No additional filtering for "All" tab
+                                break;
+                            case 'current':
+                                shouldShow = shouldShow && (status === 'In Mail Room');
+                                break;
+                            case 'picked':
+                                shouldShow = shouldShow && (status === 'Picked Up');
+                                break;
+                            case 'overdue':
+                                shouldShow = shouldShow && (status === 'In Mail Room' && dateReceived < sevenDaysAgo);
+                                break;
                         }
+                        
+                        // Show or hide the row based on combined criteria
+                        row.style.display = shouldShow ? '' : 'none';
                     });
                 });
+                
+                // Handle clear search button click
+                if (clearSearchBtn) {
+                    clearSearchBtn.addEventListener('click', function() {
+                        // Clear the search input
+                        searchInput.value = '';
+                        
+                        // Hide the clear button
+                        clearSearchBtn.style.display = 'none';
+                        
+                        // Trigger the input event to refresh the table
+                        const inputEvent = new Event('input', {
+                            bubbles: true,
+                            cancelable: true,
+                        });
+                        searchInput.dispatchEvent(inputEvent);
+                        
+                        // Focus the search input
+                        searchInput.focus();
+                    });
+                }
             }
             
             // Pagination functionality
