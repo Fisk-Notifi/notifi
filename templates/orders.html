@@ -208,16 +208,16 @@
         <div class="orders-container">
             <div class="filters">
                 <div class="filter-tabs">
-                    <button class="filter-tab active">
+                    <button class="filter-tab {% if active_tab == 'all' %}active{% endif %}">
                         All <span class="filter-count">{{ total_count }}</span>
                     </button>
-                    <button class="filter-tab">
+                    <button class="filter-tab {% if active_tab == 'current' %}active{% endif %}">
                         Current <span class="filter-count">{{ current_count }}</span>
                     </button>
-                    <button class="filter-tab">
+                    <button class="filter-tab {% if active_tab == 'picked' %}active{% endif %}">
                         Picked Up <span class="filter-count">{{ picked_up_count }}</span>
                     </button>
-                    <button class="filter-tab">
+                    <button class="filter-tab {% if active_tab == 'overdue' %}active{% endif %}">
                         Overdue <span class="filter-count">{{ overdue_count }}</span>
                     </button>
                 </div>
@@ -305,6 +305,62 @@
                     });
             } catch (error) {
                 console.error('Error loading sidebar:', error);
+            }
+            
+            // Trigger the appropriate tab on page load
+            const activeTab = document.querySelector('.filter-tab.active');
+            if (activeTab) {
+                const filterType = activeTab.textContent.trim().split(' ')[0].toLowerCase();
+                console.log('Initial tab:', filterType);
+                
+                // Update date column header based on filter type
+                const dateColumnHeader = document.getElementById('dateColumnHeader');
+                if (filterType === 'current') {
+                    dateColumnHeader.textContent = 'Latest Pickup Date';
+                    
+                    // Update date cells to show latest pickup date for current tab
+                    const dateCells = document.querySelectorAll('.date-cell');
+                    dateCells.forEach(cell => {
+                        cell.textContent = cell.getAttribute('data-latest');
+                    });
+                }
+                
+                // Apply filtering based on active tab
+                const rows = document.querySelectorAll('.orders-table tbody tr');
+                const currentDate = new Date();
+                const sevenDaysAgo = new Date(currentDate);
+                sevenDaysAgo.setDate(currentDate.getDate() - 7);
+                
+                rows.forEach(row => {
+                    const statusCell = row.querySelector('td:nth-child(5)');
+                    const status = statusCell ? statusCell.textContent.trim() : '';
+                    const dateCell = row.querySelector('td:nth-child(4)');
+                    const dateText = dateCell ? dateCell.getAttribute('data-received') : '';
+                    const dateReceived = new Date(dateText);
+                    
+                    // Determine if row should be visible based on tab filter
+                    let matchesTabFilter = false;
+                    switch (filterType) {
+                        case 'all':
+                            matchesTabFilter = true;
+                            break;
+                        case 'current':
+                            matchesTabFilter = status === 'In Mail Room';
+                            break;
+                        case 'picked':
+                            matchesTabFilter = status === 'Picked Up';
+                            break;
+                        case 'overdue':
+                            // Show packages not picked up and older than 7 days
+                            matchesTabFilter = (status === 'In Mail Room' && dateReceived < sevenDaysAgo);
+                            break;
+                        default:
+                            matchesTabFilter = true;
+                    }
+                    
+                    // Show or hide the row based on tab filter
+                    row.style.display = matchesTabFilter ? '' : 'none';
+                });
             }
             
             // Filter tab handling

@@ -9,12 +9,12 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 import email_validator
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 import base64
 import json
 from datetime import datetime
 from datetime import datetime, timedelta
-from sqlalchemy import event
+from sqlalchemy import event, func
 from sqlalchemy.sql import func
 from helper import * 
 import smtplib
@@ -119,6 +119,9 @@ def scan():
 @app.route('/orders')
 @login_required
 def orders():
+    # Get the active tab from the request, default to 'all'
+    active_tab = request.args.get('tab', 'all')
+    
     # Fetch all packages ordered by date (newest first)
     packages = Package.query.order_by(Package.date_received.desc()).all()
     
@@ -140,7 +143,8 @@ def orders():
                           total_count=total_count,
                           current_count=current_count,
                           picked_up_count=picked_up_count,
-                          overdue_count=overdue_count)
+                          overdue_count=overdue_count,
+                          active_tab=active_tab)
 
 @app.route('/confirm')
 @app.route('/confirm/<clear_cache>')
@@ -217,9 +221,15 @@ def confirm(clear_cache=None):
 
 def send_email(to_email, subject, message):
     try:
-        # Get email credentials from environment variables
-        email_username = os.environ.get('EMAIL_USERNAME')
-        email_password = os.environ.get('EMAIL_PASSWORD')
+        # Read email credentials directly from .env file
+        env_vars = dotenv_values(".env")
+        email_username = env_vars.get('EMAIL_USERNAME')
+        email_password = env_vars.get('EMAIL_PASSWORD')
+        
+        # Debug prints
+        print(f"Sending email using: {email_username}")
+        print(f"To: {to_email}")
+        print(f"Subject: {subject}")
         
         # Create message
         msg = MIMEMultipart()
@@ -325,7 +335,8 @@ Fisk University Mailroom
         session.pop('temp_image_path', None)
         session.pop('temp_package_details', None)
         
-        return redirect(url_for('orders'))
+        # Redirect to orders page with tab=current parameter
+        return redirect(url_for('orders') + '?tab=current')
         
     except Exception as e:
         flash(f'Error saving package information: {str(e)}', 'danger')
@@ -400,11 +411,68 @@ def signup():
 @login_required
 def mark_picked_up(package_id):
     try:
+        # Get the package
         package = Package.query.get_or_404(package_id)
+        
+        # Update package status
         package.is_picked_up = True
         package.picked_up_date = datetime.utcnow()
         db.session.commit()
-        return jsonify({'success': True})
+        
+        # Find matching student for notification
+        student = None
+        student_email = None
+        email_sent = False
+        
+        # Method 1: Exact match by full name
+        student = Student.query.filter_by(full_name=package.recipient_name).first()
+        
+        # Method 2: Case-insensitive match if method 1 failed
+        if not student:
+            student = Student.query.filter(
+                func.lower(Student.full_name) == func.lower(package.recipient_name)
+            ).first()
+        
+        # Method 3: Check if recipient name contains the student's name
+        if not student:
+            # Get all students
+            all_students = Student.query.all()
+            # Check if any student name is contained within the recipient name
+            for s in all_students:
+                if s.full_name.lower() in package.recipient_name.lower() or package.recipient_name.lower() in s.full_name.lower():
+                    student = s
+                    break
+        
+        if student:
+            # Get student email
+            student_email = student.email
+            
+            # Send email notification
+            subject = "Package Picked Up Confirmation - Fisk University Mailroom"
+            message = f"""
+Hello {student.full_name},
+
+This is a confirmation that your package has been picked up from the Fisk University Mailroom.
+
+Package Details:
+- Sender: {package.sender_name}
+- Date Received: {package.date_received.strftime('%Y-%m-%d %H:%M')}
+- Date Picked Up: {package.picked_up_date.strftime('%Y-%m-%d %H:%M')}
+
+Thank you for using the Fisk University Mailroom.
+
+Best regards,
+Fisk University Mailroom
+"""
+            # Send the email notification
+            email_sent = send_email(student_email, subject, message)
+        
+        # Return response with email status
+        return jsonify({
+            'success': True, 
+            'student_email': student_email if student else None,
+            'email_sent': email_sent
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
