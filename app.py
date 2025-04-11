@@ -140,7 +140,6 @@ def save_package():
     try:
         # Get form data
         recipient_name = request.form.get('recipientName')
-        sender_name = request.form.get('senderName')
         recipient_address = request.form.get('recipientAddress')
         extra_details = request.form.get('extraDetails')
         
@@ -150,7 +149,6 @@ def save_package():
         # Create new package record
         new_package = Package(
             recipient_name=recipient_name,
-            sender_name=sender_name,
             recipient_address=recipient_address,
             extra_details=extra_details,
             image_path=image_path

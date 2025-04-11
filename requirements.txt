@@ -7,4 +7,5 @@ email-validator==2.1.0.post1
 Flask-Bcrypt==1.0.1
 Flask-Migrate==4.0.5
 python-dotenv==1.0.0
-psycopg2-binary==2.9.10 
+psycopg2-binary==2.9.10
+mindee==4.20.0 
