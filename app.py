@@ -122,6 +122,10 @@ def orders():
     # Fetch all packages ordered by date (newest first)
     packages = Package.query.order_by(Package.date_received.desc()).all()
     
+    # Calculate latest pickup date for each package (3 days after date received)
+    for package in packages:
+        package.latest_pickup_date = package.date_received + timedelta(days=3)
+    
     # Calculate counts for each category
     total_count = len(packages)
     current_count = sum(1 for package in packages if not package.is_picked_up)
@@ -366,6 +370,28 @@ def update_package_details():
             'success': False,
             'message': f"Error updating package details: {str(e)}"
         }), 500
+
+@app.route('/get_package_counts')
+@login_required
+def get_package_counts():
+    # Fetch all packages
+    packages = Package.query.all()
+    
+    # Calculate counts for each category
+    total_count = len(packages)
+    current_count = sum(1 for package in packages if not package.is_picked_up)
+    picked_up_count = sum(1 for package in packages if package.is_picked_up)
+    
+    # Calculate overdue packages (packages not picked up and older than 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    overdue_count = sum(1 for package in packages if not package.is_picked_up and package.date_received < seven_days_ago)
+    
+    return jsonify({
+        'total_count': total_count,
+        'current_count': current_count,
+        'picked_up_count': picked_up_count,
+        'overdue_count': overdue_count
+    })
 
 if __name__ == '__main__':
     with app.app_context():
