@@ -1,6 +1,7 @@
 # Notifi App
 
 A Flask-based application for managing package notifications and QR code scanning for students. This application streamlines the package delivery notification process in educational institutions.
+[Notifi Presentation](https://www.canva.com/design/DAGkTQPyED4/2gLB7IO-tp5rLwQ2Z8tnwQ/view?utm_content=DAGkTQPyED4&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h2161598387)
 
 ## Features
 - User authentication (signup/login) with Fisk email addresses
